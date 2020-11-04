@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://use.fontawesome.com/fa32f8f7a8.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css">
+    <title>User page</title>
+</head>
+<body>
+  
+    <!-- навігаційна панель -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+
+        <a class="navbar-brand" href="index.html">BankApp</a>
+        <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav justify-content-end ml-auto">
+            <a class="nav-link" href="#">Enter Profile</a>
+          </div>
+        </div>
+
+    </nav>
+
+    <!-- основна частина сторінки -->
+    <div class="container-fluid h-100 text-center">
+      
+      <div class="row h-100">
+
+        <!-- навігація для дисплеїв з маленькими екранами -->
+        <div class="d-md-none" id="menu_div">
+
+          <button class="btn btn-custom btn-lg d-md-none justify" type="button" data-toggle="collapse" data-target="#collapseMenu" aria-expanded="false" aria-controls="collapseExample">
+            Показати меню
+          </button>
+
+          <div class="collapse" id="collapseMenu">
+            <div class="d-flex p-1 justify-content-center" id="user_name">
+              Володимир Солодко
+            </div>
+
+            <div class=" d-flex p-1 justify-content-center">
+              <p id="small_logo">Мої картки</p>
+            </div>
+
+            <div class=" d-flex p-1 justify-content-center">
+                Картка 1
+            </div>
+
+            <div class="card card-menu">
+
+              <div class="d-flex card-body justify-content-center">
+
+                <div class="p-1">
+                  <a href="#">Додати карту</a> 
+                </div>
+
+                <div class="p-1">
+                  <a href="#"> <i class="fa fa-2x fa-plus"></i> </a>
+                </div>
+
+              </div>
+              
+            </div>
+
+          </div>
+
+          <hr>
+
+        </div>
+
+        <!-- навігація по карткам -->
+        <div class="col-md-3 d-md-block d-none" id="user_panel">
+          <div class="col-md">
+
+            <div class="d-flex p-1 justify-content-center" id="user_name">
+              Володимир Солодко
+            </div>
+
+            <div class=" d-flex p-1 justify-content-center">
+              <p id="small_logo">Мої картки</p>
+            </div>
+
+            <div class=" d-flex p-1 justify-content-center">
+                Картка 1
+            </div>
+
+            <div class="card card-menu">
+
+              <div class="d-flex card-body justify-content-center">
+                
+                <div class="p-1">
+                  <a href="#">Додати карту</a> 
+                </div>
+
+                <div class="p-1">
+                  <a href="#"> <i class="fa fa-2x fa-plus"></i> </a>
+                </div>
+
+              </div>
+            </div>
+          
+          </div>
+
+        </div>
+
+        <!-- наповнення сторінки користувача -->
+        <div class="col-md h-100">
+
+            <!-- верхнє меню та панель з грошима -->
+          <div class="d-flex col-md mb-2">
+              <div class="mr-auto p-2">
+                Налаштування
+              </div>
+              <div class="p-2">
+                Картка 1
+              </div>
+          </div>
+
+          <div class="d-flex flex-column col-md mb-2 justify-content-end">
+            <div class="d-flex justify-content-end">
+              Власні кошти: 1000
+            </div>
+            <div class="d-flex justify-content-end">
+              Накопичені бонуси: 99.45
+            </div>
+            <div class="d-flex justify-content-end">
+              Кредитний ліміт: 500
+            </div>
+          </div>
+
+          <!-- панель з візуалізацією карток -->
+          <div class="d-flex col-md">
+
+            <!-- контейнер з картками -->
+            <div class="container">
+                
+                <div class="row-md d-md-flex justify-content-around">
+                  
+                  <!-- лицьова частина картки -->
+                  <div class="col-md-6">
+                    <div class="w-100 h-100 card-custom">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-start">
+                                Bank App
+                            </div>
+                            <p class="card-text">  </p>
+                            <p class="card-text">  </p>
+                            <div class="d-flex justify-content-end">world debit</div>
+                            <div class="d-flex justify-content-center" id="card-number">
+                                1234 5678 9234 6432
+                            </div>
+                            <p class="card-text">  </p>
+                            <div class="d-flex p-1 justify-content-start">
+                                Володимир Солодко
+                            </div>
+                            <div class="d-flex p-1 justify-content-end">
+                                06/23
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+
+                  <!-- зворотна частина картки -->
+                  <div class="col-md-6">
+                    <div class="w-100 h-100 card-custom">
+                        <div class="d-flex flex-column">
+                            <p>  </p>
+                            <p>  </p>
+                            <div class="d-flex justify-content-between" id="card_line">
+                              <div>
+                                BankApp
+                              </div>
+                              <div>
+                                BankApp
+                              </div>
+                              <div>
+                                BankApp
+                              </div>
+                            </div>
+                            <p>  </p>
+                            <div class="d-flex justify-content-center">
+                              CVV: 344
+                            </div>
+                            <p>  </p>
+                            <div class="d-flex justify-content-end" style="position: relative; margin-right: 2%;">
+                              <div id="circle1"> </div>
+                              <div id="circle2"> </div>
+                            </div>
+                            <div class="d-flex justify-content-start" style="margin-left: 2%">
+                              bankapp.com
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+
+                </div>
+                
+            </div>
+            <!-- кінець контейнера з картками -->
+
+          </div>
+          <!-- кінець панелі з картками -->
+
+          <div class="d-flex justify-content-center">
+            <button class="btn btn-custom-transact col-5" type="submit">Зробити транзакцію</button>
+          </div>
+        </div>
+        <!-- кінець наповнення сторінки користувача -->
+
+      </div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+
+</body>
+</html>

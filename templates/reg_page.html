@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>RegistrationPage</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+	<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/styles.css') }}">
+</head>
+<body>
+
+	<!-- навігаційна панель -->
+	<nav class="navbar navbar-expand-lg navbar-custom">
+
+		<a class="navbar-brand" href="index.html">BankApp</a>
+		<button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav justify-content-end ml-auto">
+				<a class="nav-link" href="#">Enter Profile</a>
+			</div>
+		</div>
+
+	</nav>
+	
+	{% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+    </div>
+	{% endfor %}
+	
+	<!-- реєстраційна форма -->
+	<div id="form_reg">
+
+		<div id="biglogo" class="d-flex justify-content-end">
+		Реєстрація
+		</div>
+
+		<!-- форма реєстрації починається тут -->
+		<form action="/reg-in" method="POST" id="registration-form" class="needs-validation" novalidate >
+			<!-- Рядок форми із ідентифікуючими даними -->
+			<div class="form-row">
+				<!-- тут вказують ім'я -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="name">Iм'я</label>
+					<input type="text" id="name" name="name" class="form-control" placeholder="Ілон" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують прізвище -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="surname">Прізвище</label>
+					<input type="text" id="surname" name="surname" class="form-control" placeholder="Маск" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують емейл -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="email">Email</label>
+					<input type="email" id="email" name="email" class="form-control" placeholder="ilon@tesla.com" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+			</div>
+
+
+			<!-- Рядок форми із паспортними даними -->
+			<div class="form-row">
+				<!-- тут вказують тип паспорту -->
+				<div class="col-md-2 mb-3 form-field">
+					<label for="passport-type">Тип паспорту</label>
+					<select  id="passport-type" name="passport_type" class="custom-select" required>
+						<!-- можливі типи паспорту -->
+						<option selected disabled value="">Обрати...</option>
+						<option value="book">Книжка</option>
+						<option value="card">Картка</option>
+					</select>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують серію паспорту -->
+				<div class="col-md-2 mb-3 form-field">
+					<label for="passport-series">Серія паспорту</label>
+					<input  type="text" id="passport-series"  name="se_pass" class="form-control" maxlength='2' value=" " autocomplete="off" disabled>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують номер паспорту -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="passport-ID">Номер паспорту</label>
+					<input type="text" id="passport-ID" name="pass_id" class="form-control" maxlength='9' autocomplete="off" disabled required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують ІПН або VATIN - Value Added Tax Identification Number -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="VATIN">Індивідуальний податковий номер</label>
+					<input type="text" id="VATIN" name="IPN" class="form-control" maxlength='12' autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+			</div>
+
+			<!-- Рядок форми із даними про місце проживання та номером мобільного телефону -->
+			<div class="form-row">
+				<!-- тут вказують область -->
+				<div class="col-md-3 mb-3 form-field">
+					<label for="region">Область</label>
+					<select id="region" name="region" class="custom-select" required>
+						<!-- області задаються генеруючим скриптом -->
+						<option selected disabled value="">Обрати...</option>
+						<option value="Київська">Київська</option>
+					</select>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують район -->
+				<div class="col-md-3 mb-3 form-field">
+					<label for="district">Район</label>
+					<select id="district"  class="custom-select" disabled required>
+						<!-- райони задаються генеруючим скриптом -->
+						<option selected disabled value="">Обрати...</option>
+					</select>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують населений пункт -->
+				<div class="col-md-3 mb-3 form-field">
+					<label for="city">Населений пункт</label>
+					<select id="city" name="city" class="custom-select" disabled required>
+						<!-- населені пункти задаються генеруючим скриптом -->
+						<option selected disabled value="">Обрати...</option>
+					</select>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують номер телефону -->
+				<div class="col-md-3 mb-3 form-field">
+					<label for="phone">Номер телефону</label>
+					<input type="tel" id="phone" name="phone_numb" class="form-control" placeholder="+380xxxxxxxxx" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+			</div>
+
+			<!-- Рядок форми для створення пароля -->
+			<div class="form-row">
+				<!-- тут створюют пароль -->
+				<div class="col-md-6 mb-3 form-field">
+					<label for="password">Пароль</label>
+					<input type="password" id="password" name="password" class="form-control" placeholder="password" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут пароль підтверджуть -->
+				<div class="col-md-6 mb-3 form-field">
+					<label for="password2">Підтвердіть пароль</label>
+					<input type="password" id="password2" class="form-control" placeholder="password" autocomplete="off" required>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+			</div>
+
+
+			<div class="form-row">
+
+				<!-- секретне питання тут -->
+				<div class="col-md-4 mb-3 form-field">
+					<label for="secret-question">Cекретне питання</label>
+					<select id="secret-question" name="secret" class="custom-select" required>
+						<option selected disabled value="">Обрати...</option>
+						<option value="favorite-book">Яка Ваша улюблена книга?</option>
+						<option value="mother-surname">Яке дівоче прізвище Вашої матері?</option>
+						<option value="favorite-dish">Яка Ваша улюблена страва?</option>
+						<option value="pet-name">Як звати Вашу хатню тваринку?</option>
+						<option value="first-game">Яка Ваша найперша відеогра?</option>
+					</select>
+				<div class="invalid-feedback">Error message</div>
+				</div>
+
+				<!-- тут вказують відповідь до секретного питання -->
+				<div class="col-md-8 mb-3 form-field">
+					<label for="secret-answer">Відповідь до секретного питання</label>
+					<input id="secret-answer" name="answer" class="form-control" autocomplete="off" required/>
+					<div class="invalid-feedback">Error message</div>
+				</div>
+			</div>
+
+
+			<div class="form-group">
+				<!-- тут вказують чекбокс на погодження з умовами -->
+				<div class="form-check">
+					<input id="accept-rules"  class="form-check-input" type="checkbox" required>
+					<label for="accept-rules" class="form-check-label">
+						Я погоджуюсь з умовами використання
+					</label>
+					<div class="invalid-feedback">
+						Якщо Ви не погоджуєтесь з умовами використання, тоді Ми не погоджуємось Вас обслуговувати
+					</div>
+				</div>
+			</div>
+
+			<!-- кнопка підтвердження -->
+			<div class="d-flex justify-content-center">
+				<button class="btn btn-custom col-md-5" type="submit">Відправити дані</button>
+			</div>
+		</form>
+
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/registrationFormValidation.js') }}"></script>
+  	<script type="text/javascript" src="{{ url_for('static', filename='js/regionsDistrictsCities.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/includingSelects.js') }}"></script>
+	
+</html>
