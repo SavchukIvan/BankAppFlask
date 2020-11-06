@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timedelta
 import random
 import string
 import re
@@ -7,6 +9,17 @@ class Luhn:
     db = {}
 
     def create_(self):
+        num = random.randrange(1, 10 ** 10)
+        num_with_zeros = '{:010}'.format(num)
+        num_with_zeros = str(num).zfill(10)
+        card_number = '400000'+num_with_zeros
+
+        iban = 'UA4430529900000' + card_number
+
+        self.db[card_number] = pin
+        return iban
+
+    def create_card(self):
         num = random.randrange(1, 10 ** 10)
         num_with_zeros = '{:010}'.format(num)
         num_with_zeros = str(num).zfill(10)
@@ -22,10 +35,12 @@ class Luhn:
         num_with_zeros = str(num).zfill(3)
         csv = num_with_zeros
 
-        iban = 'UA4430529900000' + card_number
+        start_time = datetime.now()
+        end_time = datetime.now() + timedelta(days=365*4 + 1)
 
-        self.db[card_number] = pin
-        return iban
+        return {'number': card_number, 'pin': pin,
+                'cvv': csv, 'start': start_time,
+                'end': end_time}
 
 
 def get_random_alphanumeric_string(length):

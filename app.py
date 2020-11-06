@@ -4,13 +4,19 @@ from flask_mail import Mail, Message
 from dao.table_methods import *
 from helpers.datagen import *
 from helpers.user import *
+from helpers.card import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ewhvfgegyVYAQGYVBehg82t7y3882yeuhhddh2yu87u9y8U9YYTu9Y8U98YY8UhUVAGuvhqv'
 app.config.from_pyfile('helpers/config.cfg')
 mail = Mail(app)
 
+global icard
+icard = None
 generator = Luhn()
+client_acc_log = ClientAccLog()
+userlogin = UserLogins()
+client = Client()
 
 
 def send_email(email, code):
@@ -32,7 +38,6 @@ def before_request():
     g.user = None
 
     if 'user_id' in session:
-        userlogin = UserLogins()
         result = userlogin.get_by_id(id=session['user_id'])
         user = result.first()
         user = User(id=user[0], email=user[1], password=user[2], logid=user[-1])
@@ -51,14 +56,14 @@ def login():
         user = result.first()
 
         if user is None:
-            flash('Ви вели некоректні дані')
+            flash('Ви ввели некоректні дані')
             return redirect(url_for('login'))
 
         if password == user[2]:
             session['user_id'] = user[0]
             return redirect(url_for('profile'))
 
-        flash('Ви вели некоректні дані')
+        flash('Ви ввели некоректні дані')
         return redirect(url_for('login'))
 
     return render_template('login.html')
@@ -67,7 +72,77 @@ def login():
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if g.user:
-        return render_template('user_page_without_cards.html')
+        return render_template('user_page.html')
+
+    return redirect(url_for('login'))
+
+
+@app.route('/card', methods=['GET', 'POST'])
+def card():
+    global icard
+    icard = None
+    if g.user:
+        card_inf = generator.create_card()
+        card = Cards(num=card_inf['number'],
+                     pin=card_inf['pin'],
+                     cvv=card_inf['cvv'],
+                     start=card_inf['start'],
+                     end=card_inf['end'])
+        icard = card
+
+        cardinfo = CardInfo()
+        info = cardinfo.get_all()
+        tariffs = []
+
+        for i in info:
+            tariffs.append(i[0])
+
+        st = card_inf['number']
+        num = st[:4] + ' ' + st[4:8] + ' ' + st[8:12] + ' ' + st[12:16]
+        return render_template('card_creation.html',
+                               card=card,
+                               num=num,
+                               date=str(card_inf['start'].date())[-5:],
+                               tariffs=tariffs)
+
+    return redirect(url_for('login'))
+
+
+@app.route('/card-create', methods=['GET', 'POST'])
+def card_creation():
+    if g.user:
+        if icard:
+            if request.method == 'POST':
+                data = request.form
+
+                tariff = data['tariff']
+                ctype = data['ctype']
+
+                dbcard = Card()
+                cardinfo = CardInfo()
+
+                result = cardinfo.get_by_tariff(tariff=tariff)
+                ci = result.first()
+
+                dbcard.insert(
+                    id=icard.num,
+                    pin=icard.pin,
+                    cvv=icard.cvv,
+                    type=ctype,
+                    tariff=tariff,
+                    status='active',
+                    rdate=icard.start,
+                    vdate=icard.end,
+                    money=0,
+                    limit=ci[-1],
+                    bonuses=0,
+                    acc_id=g.user.logid
+                )
+
+                return redirect(url_for('profile'))
+
+        else:
+            return render_template("404.html")
 
     return redirect(url_for('login'))
 
@@ -81,6 +156,8 @@ def apiget(action):
         на відповідну сторінку, також
         присутня сторінка з помилкою
     '''
+    if g.user:
+        return redirect(url_for('profile'))
 
     if action == 'reg':
         return render_template('reg_page.html')
@@ -96,7 +173,7 @@ def apiget(action):
 
 
 @app.route('/', methods=['GET', 'POST'])
-def signup():
+def main_index():
     '''
         Роут, що переводить на
         головну сторінку програми
@@ -111,6 +188,9 @@ def registration_in():
         з флорми та відправлення листа на
         елекронну пошту з згенерованими даними
     '''
+    if g.user:
+        render_template("404.html")
+
     if request.method == 'POST':
         # отримуємо дані з форми
         reg = request.form
@@ -122,13 +202,12 @@ def registration_in():
             row.insert(4, 'NO')
         # перед тим як продовжувати роботу програми
         # варто перевірити чи вже немає таких даних
-        userlogin = UserLogins()
+
         result = userlogin.get_by_email(email=row[2])
         email = result.first()
         if email is not None:
             return make_response(jsonify({'Email': 'Is not valid'}), 500)
 
-        client = Client()
         result = client.get_by_passid(pass_id=row[4]+row[5])
         ps = result.first()
         if ps is not None:
@@ -169,6 +248,8 @@ def registration_in():
 
 @app.route('/secret-key-check', methods=['GET', 'POST'])
 def secret_key():
+    if g.user:
+        render_template("404.html")
 
     if request.method == 'POST':
         # беремо дані з реквесту

@@ -67,7 +67,7 @@ class UserLogins:
                       where(self.table.c.userlogin == email)
         result = self.session.execute(select_stmt)
         return result
-    
+
     def get_by_id(self, id):
         select_stmt = select([self.table]).\
                       where(self.table.c.userid == id)
@@ -200,31 +200,41 @@ class CardInfo:
         self.session = self.db.sqlalchemy_session
         self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
         self.table = Table('cardinfo', self.metadata,
-                           Column('cardtype', VARCHAR(40), primary_key=True),
+                           Column('tariff', VARCHAR(40), primary_key=True),
                            Column('bonuscoef', Float, nullable=False),
                            Column('creditlimit', Float, nullable=False),
                            autoload=True)
 
-    def insert(self, type, bonus_coef, credit_limit):
+    def get_all(self):
+        result = self.session.query(self.table).all()
+        return result
+
+    def get_by_tariff(self, tariff):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.tariff == tariff)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def insert(self, tariff, bonus_coef, credit_limit):
 
         query = self.table.insert().\
-            values({'cardtype': type,
+            values({'tariff': tariff,
                     'bonuscoef': bonus_coef,
                     'creditlimit': credit_limit})
 
         self.session.execute(query)
         self.session.commit()
 
-    def delete(self, type):
+    def delete(self, tariff):
         query = self.table.delete().\
-            where(self.table.c.cardtype == type)
+            where(self.table.c.tariff == tariff)
 
         self.session.execute(query)
         self.session.commit()
 
-    def update(self, type, bonus_coef, credit_limit):
+    def update(self, tariff, bonus_coef, credit_limit):
         query = self.table.update().\
-            where(self.table.c.cardtype == type).\
+            where(self.table.c.tariff == tariff).\
             values({'bonuscoef': bonus_coef,
                     'creditlimit': credit_limit})
 
@@ -248,8 +258,8 @@ class Card:
                            Column('cardid', VARCHAR(40), primary_key=True),
                            Column('pin', VARCHAR(10), nullable=False),
                            Column('cvv', VARCHAR(10), nullable=False),
-                           Column('cardtype', VARCHAR(40), ForeignKey('cardinfo.cardtype')),
-                           Column('tariff', VARCHAR(40), nullable=False),
+                           Column('cardtype', VARCHAR(40), nullable=False),
+                           Column('tariff', VARCHAR(40), ForeignKey('cardinfo.tariff')),
                            Column('status', VARCHAR(40), nullable=False),
                            Column('releasedate', DateTime, nullable=False),
                            Column('validitydate', DateTime, nullable=False),

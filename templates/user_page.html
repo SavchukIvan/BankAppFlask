@@ -13,7 +13,7 @@
     <!-- навігаційна панель -->
     <nav class="navbar navbar-expand-lg navbar-custom">
 
-        <a class="navbar-brand" href="index.html">BankApp</a>
+        <a class="navbar-brand" href="{{ url_for('login') }}">BankApp</a>
         <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -39,9 +39,9 @@
           </button>
 
           <div class="collapse" id="collapseMenu">
-              <div class="d-flex p-1 justify-content-center" id="user_name">
-                  User's email: {{g.user.email}}
-              </div>
+            <div class="d-flex p-1 justify-content-center" id="user_name">
+              User's email: {{ g.user.email }}
+            </div>
 
             <div class=" d-flex p-1 justify-content-center">
               <p id="small_logo">Мої картки</p>
@@ -51,21 +51,9 @@
               Тут поки нема карток
             </div>
 
-            <div class="card">
-
-              <div class="d-flex card-body justify-content-center">
-
-                <div class="p-1">
-                  <a href="#">Додати карту</a> 
-                </div>
-
-                <div class="p-1">
-                  <a href="#"> <i class="fa fa-2x fa-plus"></i> </a>
-                </div>
-
-              </div>
-              
-            </div>
+            <form action="/card" method="POST">
+              <button type="submit" class="btn btn-secondary btn-lg">Створити Карту</button>
+            </form>
 
           </div>
 
@@ -78,7 +66,7 @@
           <div class="col-md">
 
             <div class="d-flex p-1 justify-content-center" id="user_name">
-                User's email: {{g.user.email}}
+              User's email: {{ g.user.email }}
             </div>
 
             <div class=" d-flex p-1 justify-content-center">
@@ -88,49 +76,17 @@
             <div class=" d-flex p-1 justify-content-center">
               Тут поки нема карток
             </div>
-
-            <div class="card">
-
-              <div class="d-flex card-body justify-content-center">
-                
-                <div class="p-1">
-                  <a href="#">Додати карту</a> 
-                </div>
-
-                <div class="p-1">
-                  <a href="#"> <i class="fa fa-2x fa-plus"></i> </a>
-                </div>
-
-              </div>
-            </div>
-          
+            <form action="/card" method="POST">
+              <button class="btn btn-secondary btn-lg" type="submit">Створити Карту</button>
+            </form>
           </div>
 
         </div>
 
         <!-- наповнення сторінки користувача -->
-        <div class="col-md h-100">
-          <div class="col-md">
-
-            <div class="card">
-
-              <div class="d-flex card-body justify-content-center">
-
-                <div class="p-1">
-                  <a href="#">Додати карту</a> 
-                </div>
-
-                <div class="p-1">
-                  <a href="#"> <i class="fa fa-2x fa-plus"></i> </a>
-                </div>
-
-              </div>
-              
-            </div>
-
-          </div>
+        <div class="col-md h-100 justify-content-start">
+          <h4>Для того, щоб створити картку, натисніть кнопку у меню.</h4>
         </div>
-
       </div>
 
     </div>

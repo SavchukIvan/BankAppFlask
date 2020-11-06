@@ -77,13 +77,16 @@ from table_methods import *
     test operations for CardInfo
 '''
 # cdinf = CardInfo()
-# cdinf.insert(type='standard',
+# cursor = cdinf.get_all()
+# for i in cursor:
+#     print(i)
+# cdinf.insert(tariff='standard',
 #              bonus_coef=0.01,
 #              credit_limit=1000)
-# cdinf.update(type='standard',
+# cdinf.update(tariff='standard',
 #              bonus_coef=0.011,
 #              credit_limit=900)
-# cdinf.delete(type='standard')
+# cdinf.delete(tariff='standard')
 
 '''
 test operations for Card
@@ -92,15 +95,15 @@ test operations for Card
 # crd.insert(id='1234567812345678',
 #            pin='1234',
 #            cvv='123',
-#            type='standard',
-#            tariff='basic',
+#            type='credit',
+#            tariff='Gold',
 #            status='active',
 #            rdate='28.10.2020',
 #            vdate='28.10.2023',
 #            money=0,
 #            limit=1000,
 #            bonuses=0,
-#            acc_id='UA133555678765132')
+#            acc_id='UA44305299000004000004485508896')
 # crd.update(id='1234567812345678',
 #            pin='1234',
 #            cvv='123',
