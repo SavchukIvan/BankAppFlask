@@ -349,7 +349,7 @@ function checkForm(event){
 		checkPhone(event),
 		checkPassword(event), checkPassword2(event),
 		checkSecretQuestion(event), checkSecretAnswer(event),
-		checkAcceptRules())) form.submit();
+		checkAcceptRules()));
 }
 
 /*

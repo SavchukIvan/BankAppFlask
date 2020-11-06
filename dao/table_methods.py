@@ -1,5 +1,5 @@
 from sqlalchemy import Table, MetaData, Column, VARCHAR, Float, DateTime, Integer, ForeignKey
-from sql.PostgresDB import *
+from dao.PostgresDB import *
 
 
 class ClientAccLog:
@@ -54,6 +54,7 @@ class UserLogins:
         self.session = self.db.sqlalchemy_session
         self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
         self.table = Table('userlogins', self.metadata,
+                           Column('userid', Integer, primary_key=True, autoincrement=True),
                            Column('userlogin', VARCHAR(40), primary_key=True),
                            Column('userpassword', VARCHAR(40), nullable=False),
                            Column('usersecurityanswer', VARCHAR(40), nullable=False),
@@ -64,6 +65,12 @@ class UserLogins:
     def get_by_email(self, email):
         select_stmt = select([self.table]).\
                       where(self.table.c.userlogin == email)
+        result = self.session.execute(select_stmt)
+        return result
+    
+    def get_by_id(self, id):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.userid == id)
         result = self.session.execute(select_stmt)
         return result
 

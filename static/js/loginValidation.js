@@ -10,7 +10,7 @@ const password = document.getElementById("password");
 Some literals used in programm to feedback errors
 */
 const emptyFieldError = "Ви нічого не ввели";
-const incorrectEmail = "Таких імейлів не існує в нашій базі даних";
+const incorrectEmail = "Неправильний формат емейлу";
 const incorrectPassword = "Неправильний пароль";
 
 

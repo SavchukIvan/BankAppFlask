@@ -21,7 +21,7 @@ from table_methods import *
 #            password="Qweefd1233",
 #            question="Mothers surname",
 #            answer="Volkova",
-#            acc_id="UA12345678765132")
+#            acc_id="UA44305299000004000004485508896")
 # usl.update(login="app@bank.com",
 #            password="Qweefd1233",
 #            question="Mothers surname",

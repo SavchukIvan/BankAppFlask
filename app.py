@@ -1,15 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify, flash
+from flask import Flask, session, g, render_template, request, redirect, url_for, make_response, jsonify, flash
 from pandas import read_csv, DataFrame
 from flask_mail import Mail, Message
-from sql.table_methods import *
-from datagen import *
-import random
-import string
-import re
+from dao.table_methods import *
+from helpers.datagen import *
+from helpers.user import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ewhvfgegyVYAQGYVBehg82t7y3882yeuhhddh2yu87u9y8U9YYTu9Y8U98YY8UhUVAGuvhqv'
-app.config.from_pyfile('config.cfg')
+app.config.from_pyfile('helpers/config.cfg')
 mail = Mail(app)
 
 generator = Luhn()
@@ -27,6 +25,51 @@ def send_email(email, code):
                       <p>З повагою,<br>BankApp</p> '''.format(code)
         msg.html = msg.body
         mail.send(msg)
+
+
+@app.before_request
+def before_request():
+    g.user = None
+
+    if 'user_id' in session:
+        userlogin = UserLogins()
+        result = userlogin.get_by_id(id=session['user_id'])
+        user = result.first()
+        user = User(id=user[0], email=user[1], password=user[2], logid=user[-1])
+        g.user = user
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session.pop('user_id', None)
+        email = request.form['email']
+        password = request.form['password']
+
+        userlogin = UserLogins()
+        result = userlogin.get_by_email(email=email)
+        user = result.first()
+
+        if user is None:
+            flash('Ви вели некоректні дані')
+            return redirect(url_for('login'))
+
+        if password == user[2]:
+            session['user_id'] = user[0]
+            return redirect(url_for('profile'))
+
+        flash('Ви вели некоректні дані')
+        return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if g.user:
+        return render_template('user_page_without_cards.html')
+
+    return redirect(url_for('login'))
 
 
 @app.route('/bank/<action>', methods=['GET', 'POST'])
@@ -76,34 +119,30 @@ def registration_in():
         # якщо тип "картка", то серія паспорту не повертається
         # доводиться вставляти власноруч
         if row[3] == 'card':
-            row.insert(4, '')
+            row.insert(4, 'NO')
         # перед тим як продовжувати роботу програми
         # варто перевірити чи вже немає таких даних
         userlogin = UserLogins()
         result = userlogin.get_by_email(email=row[2])
         email = result.first()
         if email is not None:
-            flash('User with such credentials is already exists.')
-            return redirect(url_for('apiget', action="reg"))
+            return make_response(jsonify({'Email': 'Is not valid'}), 500)
 
         client = Client()
         result = client.get_by_passid(pass_id=row[4]+row[5])
         ps = result.first()
         if ps is not None:
-            flash('User with such credentials is already exists.')
-            return redirect(url_for('apiget', action="reg"))
+            return make_response(jsonify({'PassportID': 'Is not valid'}), 500)
 
         result = client.get_by_phone(phone=row[9])
         ph = result.first()
         if ph is not None:
-            flash('User with such credentials is already exists.')
-            return redirect(url_for('apiget', action="reg"))
+            return make_response(jsonify({'Phone': 'Is not valid'}), 500)
 
-        result = clt.get_by_ipn(ipn=row[6])
+        result = client.get_by_ipn(ipn=row[6])
         ipn = result.first()
         if ipn is not None:
-            flash('User with such credentials is already exists.')
-            return redirect(url_for('apiget', action="reg"))
+            return make_response(jsonify({'IPN': 'Is not valid'}), 500)
 
         # тут звертаємось до функцій генераторів даних
         # та генеруємо ід користувача та секретний ключ
@@ -123,7 +162,7 @@ def registration_in():
         df_temp.to_csv('static/csv/temp.csv', index=False)
 
         # після цього переводимо користувача на сторінку підтвердження
-        return redirect(url_for('apiget', action="secret-key"), code=307)
+        return make_response(jsonify({'redirect': '/bank/secret-key'}), 200)
     else:
         return render_template("404.html")
 
@@ -133,9 +172,9 @@ def secret_key():
 
     if request.method == 'POST':
         # беремо дані з реквесту
-        req_data = request.get_json(force=True)
+        req_data = request.form
         # дістаємо секретний ключ
-        key = req_data["Secret"]
+        key = req_data["key"]
         # підключаємося до тимчасових даних
         df_temp = read_csv('static/csv/temp.csv')
 
@@ -172,7 +211,7 @@ def secret_key():
                 city=data['city'],
                 region=data['region'],
                 pass_type=data['pass_type'],
-                pass_id=str(data['pass_id']) if data['se_pass'] is None else str(data['se_pass']) + str(data['pass_id']),
+                pass_id=str(data['pass_id']) if data['se_pass'] == 'NO' else str(data['se_pass']) + str(data['pass_id']),
                 ipn=str(data['ipn']),
                 phone='+' + str(data['phone'])
             )
