@@ -268,6 +268,12 @@ class Card:
                            Column('bonuses', VARCHAR(40), nullable=False),
                            Column('accountid', VARCHAR(40), ForeignKey('clientacclog.accountid')),
                            autoload=True)
+    
+    def get_by_accid(self, accid):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.accountid == accid)
+        result = self.session.execute(select_stmt)
+        return result
 
     def insert(self, id, pin, cvv, type, tariff, status, rdate, vdate, money, limit, bonuses, acc_id):
 

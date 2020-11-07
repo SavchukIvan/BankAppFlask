@@ -91,7 +91,12 @@ from table_methods import *
 '''
 test operations for Card
 '''
-# crd = Card()
+crd = Card()
+result = crd.get_by_accid(accid='UA44305299000004000004485508896')
+print(len(list(result)))
+# inx = 0
+# for index, card in enumerate(result):
+#     print(index, card)
 # crd.insert(id='1234567812345678',
 #            pin='1234',
 #            cvv='123',

@@ -13,14 +13,15 @@
     <!-- навігаційна панель -->
     <nav class="navbar navbar-expand-lg navbar-custom">
 
-        <a class="navbar-brand" href="{{ url_for('login') }}">BankApp</a>
+        <a class="navbar-brand" href="#">BankApp</a>
         <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-
+        <!-- {{ url_for('login') }} -->
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav justify-content-end ml-auto">
-            <a class="nav-link" href="#">Enter Profile</a>
+            <a class="nav-link" href="#">My Profile</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
           </div>
         </div>
 
@@ -47,13 +48,24 @@
               <p id="small_logo">Мої картки</p>
             </div>
 
-            <div class=" d-flex p-1 justify-content-center">
-              Тут поки нема карток
-            </div>
+            {% if exist %}
+              {% for item in cardsnum %}
+                {% set iterated = 'card' + item|string %}
+                <div class=" d-flex p-1 justify-content-center">
+                  <a href="{{ url_for('profile', action=iterated) }}">Каркта {{ item }}</a>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class=" d-flex p-1 justify-content-center">
+                Тут поки нема карток
+              </div>
+            {% endif %}
 
-            <form action="/card" method="POST">
-              <button type="submit" class="btn btn-secondary btn-lg">Створити Карту</button>
-            </form>
+            {% if showbut %}
+              <form action="/card" method="POST">
+                <button class="btn btn-secondary btn-lg" type="submit">Створити Карту</button>
+              </form>
+            {% endif %}
 
           </div>
 
@@ -72,20 +84,140 @@
             <div class=" d-flex p-1 justify-content-center">
               <p id="small_logo">Мої картки</p>
             </div>
+            {% if exist %}
+              {% for item in cardsnum %}
+                {% set iterated = 'card' + item|string %}
+                <div class=" d-flex p-1 justify-content-center">
+                  <a href="{{ url_for('profile', action=iterated) }}">Каркта {{ item }}</a>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class=" d-flex p-1 justify-content-center">
+                Тут поки нема карток
+              </div>
+            {% endif %}
 
-            <div class=" d-flex p-1 justify-content-center">
-              Тут поки нема карток
-            </div>
-            <form action="/card" method="POST">
-              <button class="btn btn-secondary btn-lg" type="submit">Створити Карту</button>
-            </form>
+            {% if showbut %}
+              <form action="/card" method="POST">
+                <button class="btn btn-secondary btn-lg" type="submit">Створити Карту</button>
+              </form>
+            {% endif %}
           </div>
 
         </div>
 
         <!-- наповнення сторінки користувача -->
         <div class="col-md h-100 justify-content-start">
-          <h4>Для того, щоб створити картку, натисніть кнопку у меню.</h4>
+          {% if exist %}
+
+            {% if render %}
+              <!-- верхнє меню та панель з грошима -->
+                <div class="d-flex col-md mb-2">
+                  <div class="mr-auto p-2">
+                    Налаштування
+                  </div>
+                  <div class="p-2">
+                    Картка {{ idx }}
+                  </div>
+                </div>
+
+              <div class="d-flex flex-column col-md mb-2 justify-content-end">
+                <div class="d-flex justify-content-end">
+                  Власні кошти: {{ money }}
+                </div>
+                <div class="d-flex justify-content-end">
+                  Накопичені бонуси: {{ bonuses }}
+                </div>
+                <div class="d-flex justify-content-end">
+                  Кредитний ліміт: {{ limit }}
+                </div>
+              </div>
+
+              <!-- панель з візуалізацією карток -->
+              <div class="d-flex col-md">
+
+                <!-- контейнер з картками -->
+                <div class="container">
+                    
+                    <div class="row-md d-md-flex justify-content-around">
+                      
+                      <!-- лицьова частина картки -->
+                      <div class="col-md-6">
+                        <div class="w-100 h-100 card-custom">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-start">
+                                    Bank App
+                                </div>
+                                <p class="card-text">  </p>
+                                <p class="card-text">  </p>
+                                <div class="d-flex justify-content-end">world debit</div>
+                                <div class="d-flex justify-content-center" id="card-number">
+                                    <strong>{{ num }}</strong>
+                                </div>
+                                <p class="card-text">  </p>
+                                <div class="d-flex p-1 justify-content-start">
+                                    {{ tariff }}
+                                </div>
+                                <div class="d-flex p-1 justify-content-end">
+                                    {{ date }}
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+
+                      <!-- зворотна частина картки -->
+                      <div class="col-md-6">
+                        <div class="w-100 h-100 card-custom">
+                            <div class="d-flex flex-column">
+                                <p>  </p>
+                                <p>  </p>
+                                <div class="d-flex justify-content-between" id="card_line">
+                                  <div>
+                                    BankApp
+                                  </div>
+                                  <div>
+                                    BankApp
+                                  </div>
+                                  <div>
+                                    BankApp
+                                  </div>
+                                </div>
+                                <p>  </p>
+                                <div class="d-flex justify-content-center">
+                                  CVV: {{ cvv }}
+                                </div>
+                                <p>  </p>
+                                <div class="d-flex justify-content-end" style="position: relative; margin-right: 2%;">
+                                  <div id="circle1"> </div>
+                                  <div id="circle2"> </div>
+                                </div>
+                                <div class="d-flex justify-content-start" style="margin-left: 2%">
+                                  bankapp.com
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+
+                    </div>
+                    
+                </div>
+                <!-- кінець контейнера з картками -->
+
+              </div>
+              <!-- кінець панелі з картками -->
+
+              <div class="d-flex justify-content-center">
+                <button class="btn btn-custom-transact col-5" type="submit">Зробити транзакцію</button>
+              </div>
+              {% else %}
+                <h4>Оберіть карту у меню.</h4>
+              {% endif %}
+
+          {% else %}
+
+            <h4>Для того, щоб створити картку, натисніть кнопку у меню.</h4>
+
+          {% endif %}
         </div>
       </div>
 

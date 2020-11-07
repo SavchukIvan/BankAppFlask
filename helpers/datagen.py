@@ -16,7 +16,6 @@ class Luhn:
 
         iban = 'UA4430529900000' + card_number
 
-        self.db[card_number] = pin
         return iban
 
     def create_card(self):

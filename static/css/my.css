@@ -1,0 +1,20 @@
+.info-block {
+	height: 100vh;
+}
+
+
+.tariff {
+	color: #ebebeb;
+	height: 60%;
+	padding-left: 5%;
+	padding-top: 10%; 
+	border-radius: 45px;
+}
+
+.tariff.classic {
+	background: #ffa630;
+}
+
+.tariff.premium {
+	background: #f1771f;
+}
