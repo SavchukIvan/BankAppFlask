@@ -195,7 +195,7 @@
 
 			<!-- кнопка підтвердження -->
 			<div class="d-flex justify-content-center">
-				<button class="btn btn-custom col-md-5" type="submit">Відправити дані</button>
+				<button class="btn btn-custom col-md-5" type="submit" id="ButSub">Відправити дані</button>
 			</div>
 
 			<div id='alertspace'>
@@ -217,6 +217,9 @@
 		myForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 
+			var butn = document.getElementById("ButSub");
+			butn.disabled = disabled = true;
+  			butn.innerHTML = "Processing...";
 			const formData = new FormData(this);
 
 			fetch('/reg-in', {
@@ -233,6 +236,9 @@
 							"<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" +
 							"<span aria-hidden='true'>&times;</span></button> </div>";
 						}
+						var butn = document.getElementById("ButSub");
+						butn.disabled = disabled = false;
+						butn.innerHTML = "Відправити дані";
 						console.log(data);
 					});
 				} else {

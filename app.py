@@ -1,9 +1,9 @@
 from flask import Flask, session, g, render_template, request, redirect, url_for, make_response, jsonify, flash
-from pandas import read_csv, DataFrame
 from flask_mail import Mail, Message
 from dao.table_methods import *
 from datetime import timedelta
 from helpers.datagen import *
+from helpers.tmpcl import *
 from helpers.user import *
 from helpers.card import *
 
@@ -302,51 +302,53 @@ def registration_in():
         # отримуємо дані з форми
         reg = request.form
         # зберігаємо дані до списку
-        row = [str(i) for i in reg.to_dict().values()]
-        # якщо тип "картка", то серія паспорту не повертається
-        # доводиться вставляти власноруч
-        if row[3] == 'card':
-            row.insert(4, 'NO')
+        print(reg)
+        global tmp
+        tmp = TMPClient(
+            name=reg["name"],
+            surname=reg["surname"],
+            email=reg["email"],
+            pass_type=reg["passport_type"],
+            pass_id=reg["pass_id"],
+            ipn=reg["IPN"],
+            region=reg["region"],
+            city=reg["city"],
+            phone=reg["phone_numb"],
+            password=reg["password"],
+            question=reg["secret"],
+            answer=reg["answer"],
+            se_pass='' if reg["passport_type"] == 'card' else reg["se_pass"],
+            iban=generator.create_(),
+            secret_key=get_random_alphanumeric_string(64)
+        )
+
         # перед тим як продовжувати роботу програми
         # варто перевірити чи вже немає таких даних
 
         userlogin = UserLogins()
-        result = userlogin.get_by_email(email=row[2])
+        result = userlogin.get_by_email(email=tmp.email)
         email = result.first()
         if email is not None:
             return make_response(jsonify({'Email': 'Is not valid'}), 500)
 
-        result = client.get_by_passid(pass_id=row[4]+row[5])
+        client = Client()
+        result = client.get_by_passid(pass_id=tmp.se_pass+tmp.pass_id)
         ps = result.first()
         if ps is not None:
             return make_response(jsonify({'PassportID': 'Is not valid'}), 500)
 
-        result = client.get_by_phone(phone=row[9])
+        result = client.get_by_phone(phone=tmp.phone)
         ph = result.first()
         if ph is not None:
             return make_response(jsonify({'Phone': 'Is not valid'}), 500)
 
-        result = client.get_by_ipn(ipn=row[6])
+        result = client.get_by_ipn(ipn=tmp.ipn)
         ipn = result.first()
         if ipn is not None:
             return make_response(jsonify({'IPN': 'Is not valid'}), 500)
 
-        # тут звертаємось до функцій генераторів даних
-        # та генеруємо ід користувача та секретний ключ
-        iban = generator.create_()
-        secret_key = get_random_alphanumeric_string(64)
-        row.extend([iban, secret_key])  # додаємо їх в список
-
         # надсилаємо секретний ключ на пошту користувачу
-        send_email(email=row[2], code=secret_key)
-
-        # перед збереженням даних в бд
-        # потрібно помістити зібрані дані в тимчасове сховище
-        # якщо користувач надасть коректний ключ то дані будуть
-        # вставлені в бд, а тимчасове сховище очищене
-        df_temp = read_csv('static/csv/temp.csv')
-        df_temp.loc[len(df_temp)] = row
-        df_temp.to_csv('static/csv/temp.csv', index=False)
+        send_email(email=tmp.email, code=tmp.secret_key)
 
         # після цього переводимо користувача на сторінку підтвердження
         return make_response(jsonify({'redirect': '/bank/secret-key'}), 200)
@@ -364,15 +366,9 @@ def secret_key():
         req_data = request.form
         # дістаємо секретний ключ
         key = req_data["key"]
-        # підключаємося до тимчасових даних
-        df_temp = read_csv('static/csv/temp.csv')
 
         # якщо ключ присутній в датафреймі, то робимо вставку в бд
-        if key in df_temp.secret_key.values:
-            # беремо індекс ключа
-            key_idx = df_temp[df_temp.secret_key == key].index[0]
-            # дістаємо всі дані, окрім ключа за індексом
-            data = df_temp.iloc[key_idx, :14].to_dict()
+        if key == tmp.secret_key:
 
             # ініціалізуємо об'єкти класів які являють
             #  собою проекції таблиць в бд
@@ -382,34 +378,30 @@ def secret_key():
 
             # тепер виконуємо операції вставки
             client_acc_log.insert(
-                id=data['iban'],
+                id=tmp.iban,
                 status='active'
             )
 
             user_logins.insert(
-                login=data['email'],
-                password=data['password'],
-                question=data['question'],
-                answer=data['answer'],
-                acc_id=data['iban']
+                login=tmp.email,
+                password=tmp.password,
+                question=tmp.question,
+                answer=tmp.answer,
+                acc_id=tmp.iban
             )
 
             client.insert(
-                acc_id=data['iban'],
-                name=data['name'],
-                surname=data['surname'],
-                city=data['city'],
-                region=data['region'],
-                pass_type=data['pass_type'],
-                pass_id=str(data['pass_id']) if data['se_pass'] == 'NO' else str(data['se_pass']) + str(data['pass_id']),
-                ipn=str(data['ipn']),
-                phone='+' + str(data['phone'])
+                acc_id=tmp.iban,
+                name=tmp.name,
+                surname=tmp.surname,
+                city=tmp.city,
+                region=tmp.region,
+                pass_type=tmp.pass_type,
+                pass_id=tmp.se_pass + tmp.pass_id,
+                ipn=tmp.ipn,
+                phone=tmp.phone
             )
 
-            # так як тепер користувач зареєстрований можна його
-            # видалити з тимчасового кешу
-            df_temp = df_temp.drop(key_idx)
-            df_temp.to_csv('static/csv/temp.csv', index=False)
             # відправляємо запит на сторону клієнта про вдале підтвердження
             # статус 200 означає, що все пройшло успішно
             resp = {'redirect': '/bank/secret-key-approved'}
@@ -428,18 +420,4 @@ def secret_key():
 
 
 if __name__ == "__main__":
-    # df_temp = read_csv('static/csv/temp.csv')
-    # idx = df_temp[df_temp.secret_key == 'pIMTt8gLjbWUaGwDtcwARUQJDrM4JrfydKBYvbfmvdMmVqLKnKILLgbC4nXLbR42'].index[0]
-    # df_temp = df_temp.drop(idx)
-    # print(df_temp)
-    # df_temp.to_csv('static/csv/temp.csv', index=False)
-    # columns = ['name', 'surname', 'email', 'pass_type', 'se_pass', 'pass_id', 'ipn',
-    #            'region', 'city', 'phone', 'password', 'question', 'answer', 'iban',
-    #            'secret_key']
-    # df_temp = DataFrame(columns=columns)
-    # df_temp.reset_index(drop=True)
-    # df_temp.drop(df_temp.index, inplace=True)
-    # print(df_temp)
-    # print(df_temp.secret_key.values)
-    # print(df_temp.iloc[idx, :14].to_dict())
     app.run(debug=True)
