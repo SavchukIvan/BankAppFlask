@@ -195,6 +195,21 @@ def card():
         for i in info:
             tariffs.append(i[0])
 
+        # дістаємо всі картки, що є
+        cardtype = CardTypeInfo()
+        info = cardtype.get_all()
+        types = []
+
+        for i in info:
+            types.append(i[0])
+
+        existing = []
+        for i in result:
+            existing.append(i[3])
+
+        if 'Credit' in existing:
+            types.remove('Credit')
+
         st = card_inf['number']
         # це для того, щоб гарно відмалювати картку
         num = st[:4] + ' ' + st[4:8] + ' ' + st[8:12] + ' ' + st[12:16]
@@ -203,7 +218,8 @@ def card():
                                card=card,
                                num=num,
                                date=str(card_inf['start'].date())[-5:],
-                               tariffs=tariffs)
+                               tariffs=tariffs,
+                               types=types)
 
     return redirect(url_for('login'))
 
@@ -225,9 +241,10 @@ def card_creation():
                 # ініціалізуємо з'єднання з бд
                 dbcard = Card()
                 cardinfo = CardInfo()
+                cardtype = CardTypeInfo()
 
                 # дістаємо інформацію про тарифи
-                result = cardinfo.get_by_tariff(tariff=tariff)
+                result = cardtype.get_by_type(cardtype=ctype)
                 ci = result.first()
 
                 # вставляємо карту в бд
@@ -302,7 +319,6 @@ def registration_in():
         # отримуємо дані з форми
         reg = request.form
         # зберігаємо дані до списку
-        print(reg)
         global tmp
         tmp = TMPClient(
             name=reg["name"],
@@ -358,6 +374,7 @@ def registration_in():
 
 @app.route('/secret-key-check', methods=['GET', 'POST'])
 def secret_key():
+
     if g.user:
         render_template("404.html")
 

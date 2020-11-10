@@ -202,7 +202,6 @@ class CardInfo:
         self.table = Table('cardinfo', self.metadata,
                            Column('tariff', VARCHAR(40), primary_key=True),
                            Column('bonuscoef', Float, nullable=False),
-                           Column('creditlimit', Float, nullable=False),
                            autoload=True)
 
     def get_all(self):
@@ -215,12 +214,11 @@ class CardInfo:
         result = self.session.execute(select_stmt)
         return result
 
-    def insert(self, tariff, bonus_coef, credit_limit):
+    def insert(self, tariff, bonus_coef):
 
         query = self.table.insert().\
             values({'tariff': tariff,
-                    'bonuscoef': bonus_coef,
-                    'creditlimit': credit_limit})
+                    'bonuscoef': bonus_coef})
 
         self.session.execute(query)
         self.session.commit()
@@ -232,11 +230,62 @@ class CardInfo:
         self.session.execute(query)
         self.session.commit()
 
-    def update(self, tariff, bonus_coef, credit_limit):
+    def update(self, tariff, bonus_coef):
         query = self.table.update().\
             where(self.table.c.tariff == tariff).\
-            values({'bonuscoef': bonus_coef,
+            values({'bonuscoef': bonus_coef})
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def __del__(self):
+        self.session.close()
+
+
+class CardTypeInfo:
+    '''
+        Інформація та методи
+        для таблиці CardInfo
+    '''
+    def __init__(self):
+        self.db = PostgresDb()
+        self.session = self.db.sqlalchemy_session
+        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+        self.table = Table('cardtypeinfo', self.metadata,
+                           Column('cardtype', VARCHAR(40), primary_key=True),
+                           Column('creditlimit', Float, nullable=False),
+                           autoload=True)
+
+    def get_all(self):
+        result = self.session.query(self.table).all()
+        return result
+
+    def get_by_type(self, cardtype):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.cardtype == cardtype)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def insert(self, cardtype, credit_limit):
+
+        query = self.table.insert().\
+            values({'cardtype': cardtype,
                     'creditlimit': credit_limit})
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def delete(self, cardtype):
+        query = self.table.delete().\
+            where(self.table.c.cardtype == cardtype)
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def update(self, cardtype, credit_limit):
+        query = self.table.update().\
+            where(self.table.c.cardtype == cardtype).\
+            values({'creditlimit': credit_limit})
 
         self.session.execute(query)
         self.session.commit()
@@ -258,7 +307,7 @@ class Card:
                            Column('cardid', VARCHAR(40), primary_key=True),
                            Column('pin', VARCHAR(10), nullable=False),
                            Column('cvv', VARCHAR(10), nullable=False),
-                           Column('cardtype', VARCHAR(40), nullable=False),
+                           Column('cardtype', VARCHAR(40), ForeignKey('cardtypeinfo.cardtype')),
                            Column('tariff', VARCHAR(40), ForeignKey('cardinfo.tariff')),
                            Column('status', VARCHAR(40), nullable=False),
                            Column('releasedate', DateTime, nullable=False),
@@ -268,7 +317,7 @@ class Card:
                            Column('bonuses', VARCHAR(40), nullable=False),
                            Column('accountid', VARCHAR(40), ForeignKey('clientacclog.accountid')),
                            autoload=True)
-    
+
     def get_by_accid(self, accid):
         select_stmt = select([self.table]).\
                       where(self.table.c.accountid == accid)

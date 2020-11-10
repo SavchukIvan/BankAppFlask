@@ -126,8 +126,9 @@
                 <select name="ctype" class="custom-select" id="validationCustom01" required>
                   <!-- це опції -->
                   <option selected disabled value="">Оберіть тип картки...</option>
-                  <option>Дебітова</option>
-                  <option>Кредитна</option>
+                  {% for item in types %}
+                  <option> {{ item }}</option>
+                  {% endfor %}
                 </select>
                 <div class="invalid-feedback">
                   Будь-ласка, оберіть тип.
