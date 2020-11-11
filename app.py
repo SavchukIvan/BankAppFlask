@@ -240,7 +240,6 @@ def card_creation():
 
                 # ініціалізуємо з'єднання з бд
                 dbcard = Card()
-                cardinfo = CardInfo()
                 cardtype = CardTypeInfo()
 
                 # дістаємо інформацію про тарифи
