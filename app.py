@@ -1,5 +1,7 @@
 from flask import Flask, session, g, render_template, request, redirect, url_for, make_response, jsonify, flash
 from flask_mail import Mail, Message
+from sqlalchemy import MetaData
+from dao.PostgresDB import *
 from dao.table_methods import *
 from datetime import timedelta
 from helpers.datagen import *
@@ -12,9 +14,20 @@ app.config['SECRET_KEY'] = 'ewhvfgegyVYAQGYVBehg82t7y3882yeuhhddh2yu87u9y8U9YYTu
 app.config.from_pyfile('helpers/config.cfg')
 mail = Mail(app)
 
-global icard
-icard = None
 generator = Luhn()
+
+db = PostgresDb()
+sessio = db.sqlalchemy_session
+metadata = MetaData(bind=db.sqlalchemy_engine)
+
+client_acc_log = ClientAccLog(session=sessio, meta=metadata)
+user_logins = UserLogins(session=sessio, meta=metadata)
+client = Client(session=sessio, meta=metadata)
+ucard = Card(session=sessio, meta=metadata)
+cardinfo = CardInfo(session=sessio, meta=metadata)
+cardtype = CardTypeInfo(session=sessio, meta=metadata)
+tmp_crd = TMPCard(session=sessio, meta=metadata)
+tmp_cli = TMPClientInf(session=sessio, meta=metadata)
 
 
 def send_email(email, code):
@@ -46,8 +59,7 @@ def before_request():
 
         # надаємо глобальній змінній юзера параметри які ми надалі
         # можемо використовувати в програмі
-        userlogin = UserLogins()
-        result = userlogin.get_by_id(id=session['user_id'])
+        result = user_logins.get_by_id(id=session['user_id'])
         user = result.first()
         user = User(id=user[0], email=user[1], password=user[2], logid=user[-1])
         g.user = user
@@ -63,8 +75,7 @@ def login():
         password = request.form['password']
 
         # дивимося чи є такі дані в бд
-        userlogin = UserLogins()
-        result = userlogin.get_by_email(email=email)
+        result = user_logins.get_by_email(email=email)
         user = result.first()
 
         if user is None:
@@ -89,8 +100,7 @@ def profile(action):
     # якщо юзер в системі...
     if g.user:
         # дістаємо всі його картки
-        crd = Card()
-        result = crd.get_by_accid(accid=g.user.logid)
+        result = ucard.get_by_accid(accid=g.user.logid)
         result = list(result)
         ncards = len(result)
         cardsnum = [i+1 for i in range(ncards)]
@@ -146,7 +156,7 @@ def profile(action):
                                        date=date,
                                        cvv=cvv)
 
-    return redirect(url_for('login'))
+    return render_template("404.html")
 
 
 @app.route('/logout')
@@ -163,13 +173,9 @@ def logout():
 @app.route('/card', methods=['GET', 'POST'])
 def card():
 
-    global icard
-    icard = None
-
     if g.user:
         # дивимося чи немає в юзера 4 картки
-        crd = Card()
-        result = crd.get_by_accid(accid=g.user.logid)
+        result = ucard.get_by_accid(accid=g.user.logid)
         result = list(result)
         ncards = len(result)
 
@@ -179,16 +185,25 @@ def card():
 
         # звертаємося до функції в helpers, та генеруємо всі дані картки
         card_inf = generator.create_card()
+        # result = ucard.get_by_cardid(cardid=card_inf['number'])
+        # if result is not None:
+        #     card_inf = generator.create_card()
+
         # тимчасово зберіємо їх в спеціальному класі
-        card = Cards(num=card_inf['number'],
-                     pin=card_inf['pin'],
-                     cvv=card_inf['cvv'],
-                     start=card_inf['start'],
-                     end=card_inf['end'])
-        icard = card
+        icard = Cards(num=card_inf['number'],
+                      pin=card_inf['pin'],
+                      cvv=card_inf['cvv'],
+                      start=card_inf['start'],
+                      end=card_inf['end'])
+
+        tmp_crd.insert(id=icard.num,
+                       pin=icard.pin,
+                       cvv=icard.cvv,
+                       rdate=icard.start,
+                       vdate=icard.end,
+                       acc_id=g.user.logid)
 
         # дістаємо всі тарифи, що є
-        cardinfo = CardInfo()
         info = cardinfo.get_all()
         tariffs = []
 
@@ -196,7 +211,6 @@ def card():
             tariffs.append(i[0])
 
         # дістаємо всі картки, що є
-        cardtype = CardTypeInfo()
         info = cardtype.get_all()
         types = []
 
@@ -210,18 +224,22 @@ def card():
         if 'Credit' in existing:
             types.remove('Credit')
 
+        debit_count = existing.count('Debit')
+        if debit_count == 3:
+            types.remove('Debit')
+
         st = card_inf['number']
         # це для того, щоб гарно відмалювати картку
         num = st[:4] + ' ' + st[4:8] + ' ' + st[8:12] + ' ' + st[12:16]
         # передаємо всі дані на сторінку
         return render_template('card_creation.html',
-                               card=card,
+                               card=icard,
                                num=num,
                                date=str(card_inf['start'].date())[-5:],
                                tariffs=tariffs,
                                types=types)
 
-    return redirect(url_for('login'))
+    return render_template("404.html")
 
 
 @app.route('/card-create', methods=['GET', 'POST'])
@@ -229,45 +247,43 @@ def card_creation():
 
     # якщо юзер в сесії...
     if g.user:
-        # якщо створений екземпляр класу icard(глобальна змінна)
-        if icard:
-            # збираємо всі дані з форми
-            if request.method == 'POST':
-                data = request.form
+        # збираємо всі дані з форми
+        if request.method == 'POST':
+            data = request.form
 
-                tariff = data['tariff']
-                ctype = data['ctype']
+            tariff = data['tariff']
+            ctype = data['ctype']
 
-                # ініціалізуємо з'єднання з бд
-                dbcard = Card()
-                cardtype = CardTypeInfo()
+            result = tmp_crd.get_by_accid(accid=g.user.logid)
+            icard = result.first()
+            # дістаємо інформацію про тарифи
+            result = cardtype.get_by_type(cardtype=ctype)
+            ci = result.first()
 
-                # дістаємо інформацію про тарифи
-                result = cardtype.get_by_type(cardtype=ctype)
-                ci = result.first()
+            # вставляємо карту в бд
+            ucard.insert(
+                id=icard[0],
+                pin=icard[1],
+                cvv=icard[2],
+                type=ctype,
+                tariff=tariff,
+                status='active',
+                rdate=icard[3],
+                vdate=icard[4],
+                money=0,
+                limit=ci[-1],
+                bonuses=0,
+                acc_id=icard[5]
+            )
 
-                # вставляємо карту в бд
-                dbcard.insert(
-                    id=icard.num,
-                    pin=icard.pin,
-                    cvv=icard.cvv,
-                    type=ctype,
-                    tariff=tariff,
-                    status='active',
-                    rdate=icard.start,
-                    vdate=icard.end,
-                    money=0,
-                    limit=ci[-1],
-                    bonuses=0,
-                    acc_id=g.user.logid
-                )
+            tmp_crd.delete(accid=icard[5])
 
-                return redirect(url_for('profile', action='cards'))
+            return redirect(url_for('profile', action='cards'), code=301)
 
         else:
             return render_template("404.html")
 
-    return redirect(url_for('login'))
+    return render_template("404.html")
 
 
 @app.route('/bank/<action>', methods=['GET', 'POST'])
@@ -280,7 +296,7 @@ def apiget(action):
         присутня сторінка з помилкою
     '''
     if g.user:
-        return redirect(url_for('profile'))
+        return render_template("404.html")
 
     if action == 'reg':
         return render_template('reg_page.html')
@@ -318,12 +334,42 @@ def registration_in():
         # отримуємо дані з форми
         reg = request.form
         # зберігаємо дані до списку
-        global tmp
-        tmp = TMPClient(
+
+        se_pass = '' if reg["passport_type"] == 'card' else reg["se_pass"]
+        pass_id = reg["pass_id"]
+        # перед тим як продовжувати роботу програми
+        # варто перевірити чи вже немає таких даних
+
+        result = user_logins.get_by_email(email=reg["email"])
+        email = result.first()
+        if email is not None:
+            return make_response(jsonify({'Email': 'Is not valid'}), 500)
+
+        result = client.get_by_passid(pass_id=se_pass+pass_id)
+        ps = result.first()
+        if ps is not None:
+            return make_response(jsonify({'PassportID': 'Is not valid'}), 500)
+
+        result = client.get_by_phone(phone=reg["phone_numb"])
+        ph = result.first()
+        if ph is not None:
+            return make_response(jsonify({'Phone': 'Is not valid'}), 500)
+
+        result = client.get_by_ipn(ipn=reg["IPN"])
+        ipn = result.first()
+        if ipn is not None:
+            return make_response(jsonify({'IPN': 'Is not valid'}), 500)
+
+        # надсилаємо секретний ключ на пошту користувачу
+        secret_key = get_random_alphanumeric_string(64)
+        send_email(email=reg["email"], code=secret_key)
+
+        tmp_cli.insert(
             name=reg["name"],
             surname=reg["surname"],
             email=reg["email"],
             pass_type=reg["passport_type"],
+            se_pass='' if reg["passport_type"] == 'card' else reg["se_pass"],
             pass_id=reg["pass_id"],
             ipn=reg["IPN"],
             region=reg["region"],
@@ -332,39 +378,9 @@ def registration_in():
             password=reg["password"],
             question=reg["secret"],
             answer=reg["answer"],
-            se_pass='' if reg["passport_type"] == 'card' else reg["se_pass"],
             iban=generator.create_(),
-            secret_key=get_random_alphanumeric_string(64)
+            secret=secret_key
         )
-
-        # перед тим як продовжувати роботу програми
-        # варто перевірити чи вже немає таких даних
-
-        userlogin = UserLogins()
-        result = userlogin.get_by_email(email=tmp.email)
-        email = result.first()
-        if email is not None:
-            return make_response(jsonify({'Email': 'Is not valid'}), 500)
-
-        client = Client()
-        result = client.get_by_passid(pass_id=tmp.se_pass+tmp.pass_id)
-        ps = result.first()
-        if ps is not None:
-            return make_response(jsonify({'PassportID': 'Is not valid'}), 500)
-
-        result = client.get_by_phone(phone=tmp.phone)
-        ph = result.first()
-        if ph is not None:
-            return make_response(jsonify({'Phone': 'Is not valid'}), 500)
-
-        result = client.get_by_ipn(ipn=tmp.ipn)
-        ipn = result.first()
-        if ipn is not None:
-            return make_response(jsonify({'IPN': 'Is not valid'}), 500)
-
-        # надсилаємо секретний ключ на пошту користувачу
-        send_email(email=tmp.email, code=tmp.secret_key)
-
         # після цього переводимо користувача на сторінку підтвердження
         return make_response(jsonify({'redirect': '/bank/secret-key'}), 200)
     else:
@@ -383,41 +399,40 @@ def secret_key():
         # дістаємо секретний ключ
         key = req_data["key"]
 
-        # якщо ключ присутній в датафреймі, то робимо вставку в бд
-        if key == tmp.secret_key:
+        result = tmp_cli.get_by_secret(secret=key)
+        tmp = result.first()
+
+        if key == tmp[-1]:
 
             # ініціалізуємо об'єкти класів які являють
             #  собою проекції таблиць в бд
-            client_acc_log = ClientAccLog()
-            user_logins = UserLogins()
-            client = Client()
 
             # тепер виконуємо операції вставки
             client_acc_log.insert(
-                id=tmp.iban,
+                id=tmp[-2],
                 status='active'
             )
 
             user_logins.insert(
-                login=tmp.email,
-                password=tmp.password,
-                question=tmp.question,
-                answer=tmp.answer,
-                acc_id=tmp.iban
+                login=tmp[2],
+                password=tmp[-5],
+                question=tmp[-4],
+                answer=tmp[-3],
+                acc_id=tmp[-2]
             )
 
             client.insert(
-                acc_id=tmp.iban,
-                name=tmp.name,
-                surname=tmp.surname,
-                city=tmp.city,
-                region=tmp.region,
-                pass_type=tmp.pass_type,
-                pass_id=tmp.se_pass + tmp.pass_id,
-                ipn=tmp.ipn,
-                phone=tmp.phone
+                acc_id=tmp[-2],
+                name=tmp[0],
+                surname=tmp[1],
+                city=tmp[8],
+                region=tmp[7],
+                pass_type=tmp[3],
+                pass_id=tmp[4] + tmp[5],
+                ipn=tmp[6],
+                phone=tmp[9]
             )
-
+            tmp_cli.delete(secret=key)
             # відправляємо запит на сторону клієнта про вдале підтвердження
             # статус 200 означає, що все пройшло успішно
             resp = {'redirect': '/bank/secret-key-approved'}
@@ -436,4 +451,4 @@ def secret_key():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

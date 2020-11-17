@@ -1,5 +1,19 @@
-from table_methods import *
+# from table_methods import *
+# from sqlalchemy import MetaData
+# from PostgresDB import *
 
+# db = PostgresDb()
+# session = db.sqlalchemy_session
+# metadata = MetaData(bind=db.sqlalchemy_engine)
+
+# clg = ClientAccLog(session=session, meta=metadata)
+# usl = UserLogins(session=session, meta=metadata)
+# clt = Client(session=session, meta=metadata)
+# cdinf = CardInfo(session=session, meta=metadata)
+# ctinf = CardTypeInfo(session=session, meta=metadata)
+# crd = Card(session=session, meta=metadata)
+# tnf = TransInfo(session=session, meta=metadata)
+# tact = Transaction(session=session, meta=metadata)
 '''
     test operations for ClientAccLog
 '''
@@ -13,10 +27,9 @@ from table_methods import *
 '''
     test operations for UserLogins
 '''
-# usl = UserLogins()
+# usl = UserLogins(session=session, meta=metadata)
 # result = usl.get_by_email(email="vanya.zombi2@gmail.com")
-# for i in result:
-#     print(i[0])
+# print(result)
 # usl.insert(login="app@bank.com",
 #            password="Qweefd1233",
 #            question="Mothers surname",
@@ -91,9 +104,9 @@ from table_methods import *
 '''
 test operations for Card
 '''
-crd = Card()
-result = crd.get_by_accid(accid='UA44305299000004000004485508896')
-print(len(list(result)))
+# crd = Card()
+# result = crd.get_by_accid(accid='UA44305299000004000004485508896')
+# print(len(list(result)))
 # inx = 0
 # for index, card in enumerate(result):
 #     print(index, card)

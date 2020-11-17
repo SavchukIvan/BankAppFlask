@@ -1,5 +1,6 @@
 from sqlalchemy import Table, MetaData, Column, VARCHAR, Float, DateTime, Integer, ForeignKey
 from dao.PostgresDB import *
+# from PostgresDB import *
 
 
 class ClientAccLog:
@@ -7,14 +8,13 @@ class ClientAccLog:
         Інформація та методи
         для таблиці ClientAccLog
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('clientacclog', self.metadata,
                            Column('accountid', VARCHAR(80), primary_key=True),
                            Column('accountstatus', VARCHAR(40), nullable=False),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def insert(self, id, status):
 
@@ -49,10 +49,9 @@ class UserLogins:
         Інформація та методи
         для таблиці UserLogins
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('userlogins', self.metadata,
                            Column('userid', Integer, primary_key=True, autoincrement=True),
                            Column('userlogin', VARCHAR(40), primary_key=True),
@@ -60,7 +59,7 @@ class UserLogins:
                            Column('usersecurityanswer', VARCHAR(40), nullable=False),
                            Column('usersecurityquestion', VARCHAR(80), nullable=False),
                            Column('accountid', VARCHAR(40), ForeignKey('clientacclog.accountid')),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def get_by_email(self, email):
         select_stmt = select([self.table]).\
@@ -113,10 +112,9 @@ class Client:
         Інформація та методи
         для таблиці UserLogins
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('client', self.metadata,
                            Column('clientid', Integer, primary_key=True),
                            Column('accountid', VARCHAR(40), ForeignKey('clientacclog.accountid')),
@@ -128,7 +126,7 @@ class Client:
                            Column('passportid', VARCHAR(40), nullable=False, unique=True),
                            Column('ipn', VARCHAR(40), nullable=False, unique=True),
                            Column('phone', VARCHAR(40), nullable=False, unique=True),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def get_by_phone(self, phone):
         select_stmt = select([self.table]).\
@@ -195,14 +193,13 @@ class CardInfo:
         Інформація та методи
         для таблиці CardInfo
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('cardinfo', self.metadata,
                            Column('tariff', VARCHAR(40), primary_key=True),
                            Column('bonuscoef', Float, nullable=False),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def get_all(self):
         result = self.session.query(self.table).all()
@@ -247,14 +244,13 @@ class CardTypeInfo:
         Інформація та методи
         для таблиці CardInfo
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('cardtypeinfo', self.metadata,
                            Column('cardtype', VARCHAR(40), primary_key=True),
                            Column('creditlimit', Float, nullable=False),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def get_all(self):
         result = self.session.query(self.table).all()
@@ -299,10 +295,9 @@ class Card:
         Інформація та методи
         для таблиці Card
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('card', self.metadata,
                            Column('cardid', VARCHAR(40), primary_key=True),
                            Column('pin', VARCHAR(10), nullable=False),
@@ -316,11 +311,17 @@ class Card:
                            Column('creditlimit', Float, nullable=False),
                            Column('bonuses', VARCHAR(40), nullable=False),
                            Column('accountid', VARCHAR(40), ForeignKey('clientacclog.accountid')),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def get_by_accid(self, accid):
         select_stmt = select([self.table]).\
                       where(self.table.c.accountid == accid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def get_by_cardid(self, cardid):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.cardid == cardid)
         result = self.session.execute(select_stmt)
         return result
 
@@ -377,14 +378,13 @@ class TransInfo:
         Інформація та методи
         для таблиці TransInfo
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('transinfo', self.metadata,
                            Column('transactiontype', VARCHAR(40), primary_key=True),
                            Column('comissioncoef', Float, nullable=False),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def insert(self, type, comission_coef):
 
@@ -419,10 +419,9 @@ class Transaction:
         Інформація та методи
         для таблиці Transaction
     '''
-    def __init__(self):
-        self.db = PostgresDb()
-        self.session = self.db.sqlalchemy_session
-        self.metadata = MetaData(bind=self.db.sqlalchemy_engine)
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
         self.table = Table('transaction', self.metadata,
                            Column('transactionid', Integer, primary_key=True),
                            Column('cardid', VARCHAR(40), ForeignKey('card.cardid')),
@@ -434,7 +433,7 @@ class Transaction:
                            Column('bonusesreсieved', Float, nullable=False),
                            Column('transdatetime', DateTime, nullable=False),
                            Column('transactiontype', VARCHAR(80), ForeignKey('transinfo.transactiontype')),
-                           autoload=True)
+                           autoload=True, extend_existing=True)
 
     def insert(self, cardid, rcardid, inisum, comsum, totsum, bonusused, bonusesrec, transtime, transtype):
 
@@ -448,6 +447,113 @@ class Transaction:
                     'bonusesreсieved': bonusesrec,
                     'transdatetime': transtime,
                     'transactiontype': transtype})
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def __del__(self):
+        self.session.close()
+
+
+class TMPClientInf:
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
+        self.table = Table('tmpclientinf', self.metadata,
+                           Column('name',  VARCHAR(40), nullable=False),
+                           Column('surname', VARCHAR(40), nullable=False),
+                           Column('email', VARCHAR(40), nullable=False),
+                           Column('passtype', VARCHAR(40), nullable=False),
+                           Column('se_pass', VARCHAR(40), nullable=False),
+                           Column('pass_id', VARCHAR(40)),
+                           Column('ipn', VARCHAR(40), nullable=False),
+                           Column('region', VARCHAR(40), nullable=False),
+                           Column('city', VARCHAR(40), nullable=False),
+                           Column('phone', VARCHAR(40), nullable=False),
+                           Column('password', VARCHAR(40), nullable=False),
+                           Column('question', VARCHAR(80), nullable=False),
+                           Column('answer', VARCHAR(80), nullable=False),
+                           Column('iban', VARCHAR(40), nullable=False),
+                           Column('secret', VARCHAR(80), nullable=False),
+                           autoload=True, extend_existing=True)
+
+    def get_by_secret(self, secret):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.secret == secret)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def insert(self, name, surname, email, pass_type, se_pass,
+               pass_id, ipn, region, city, phone, password,
+               question, answer, iban, secret):
+
+        query = self.table.insert().\
+            values({'name': name,
+                    'surname': surname,
+                    'email': email,
+                    'passtype': pass_type,
+                    'se_pass': se_pass,
+                    'pass_id': pass_id, 
+                    'ipn': ipn,
+                    'region': region,
+                    'city': city,
+                    'phone': phone,
+                    'password': password,
+                    'question': question,
+                    'answer': answer,
+                    'iban': iban,
+                    'secret': secret
+                    })
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def delete(self, secret):
+        query = self.table.delete().\
+            where(self.table.c.secret == secret)
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def __del__(self):
+        self.session.close()
+
+
+class TMPCard:
+    def __init__(self, session, meta):
+        self.session = session
+        self.metadata = meta
+        self.table = Table('tmpcard', self.metadata,
+                           Column('cardid', VARCHAR(40), nullable=False),
+                           Column('pin', VARCHAR(10), nullable=False),
+                           Column('cvv', VARCHAR(10), nullable=False),
+                           Column('startdate', DateTime, nullable=False),
+                           Column('enddate', DateTime, nullable=False),
+                           Column('accountid', VARCHAR(40), nullable=False),
+                           autoload=True, extend_existing=True)
+
+    def get_by_accid(self, accid):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.accountid == accid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def insert(self, id, pin, cvv, rdate, vdate, acc_id):
+
+        query = self.table.insert().\
+            values({'cardid': id,
+                    'pin': pin,
+                    'cvv': cvv,
+                    'startdate': rdate,
+                    'enddate': vdate,
+                    'accountid': acc_id})
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def delete(self, accid):
+        query = self.table.delete().\
+            where(self.table.c.accountid == accid)
 
         self.session.execute(query)
         self.session.commit()
