@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/styles.css') }}">
+    <title>Transaction submit</title>
+</head>
+<body>
+
+    <!-- навігаційна панель -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+
+        <a class="navbar-brand" href="{{ url_for('main_index') }}">BankApp</a>
+        <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav justify-content-end ml-auto">
+            <a class="nav-link" href="{{ url_for('profile', action='cards') }}">My Profile</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
+          </div>
+        </div>
+
+    </nav>
+    
+    <div id="outside_block">
+        <div id="transact_submit" class="col-md-5 mb-3">
+            <div class="d-flex justify-content-center" id="biglogo">
+                Підтвердження Транзакції
+            </div>
+            
+            <hr/>
+    
+                <form action="/transact_execute" method="POST" id="transaction-form">
+                    <!-- Розставити імена кожному інпуту!!!!
+                        Та розставити коректні ID!!!!!
+                    -->
+                    <div class="form-row">
+                        <div class="col-md-6">
+                            <label class="labelCheque">З картки</label><br>
+                            <input name="senderCard" type="text" value="{{ data.sender_card }}" readonly="readonly">
+                            <hr/>
+                        </div>
+    
+                        <div class="col-md-6">
+                            <label class="labelCheque">На картку</label><br>
+                            <input name="receiverCard" type="text" value="{{ data.receiver_card }}" readonly="readonly">
+                            <hr/>
+                        </div>
+                        
+                    </div>
+
+                    
+                    <div class="form-row">
+                        <div class="col-md-12 mb-3">
+                            <label class="labelCheque">Отримувач</label><br>
+                            <input class="boldInput" name="receiverName" type="text" value="{{ data.receiver_name }}" readonly="readonly">
+                            <hr/>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
+                            <label class="labelCheque">Сума</label><br>
+                            <input name="sum" type="text" value="{{ data.sum }}" readonly="readonly">
+                            <hr/>
+                        </div>
+    
+                        <div class="col-md-6 mb-3">
+                            <label class="labelCheque">Комісія</label><br>
+                            <input name="commission" type="text" value="{{ data.commission }}" readonly="readonly">
+                            <hr/>
+                        </div>
+                    </div>
+    
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
+                            <label class="labelCheque">Загальна сума</label><br>
+                            <input class="boldInput" name="totalSum" type="text" value="{{ data.total_sum }}" readonly="readonly">
+                            <hr/>
+                        </div>
+    
+                        <div class="col-md-6 mb-3">
+                            <label class="labelCheque">Бонусів отримано</label><br>
+                            <input name="bonuses" type="text" value="{{ data.bonuses_received }}" readonly="readonly">
+                            <hr/>
+                        </div>
+                    </div>
+    
+                    <div class="form-row">
+                        <div class="col-md-12 mb-3">
+                            <label class="labelCheque">Опис транзакції</label><br>
+                            <input name="purpose" type="text" value="{{ data.purpose }}" readonly="readonly">
+                            <hr/>
+                        </div>
+                    </div>
+    
+                    <!-- кнопка підтвердження -->
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn-custom col-md-5" type="submit">Підтвердити</button>
+                    </div>
+                </form>
+        </div>
+    </div>
+    
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+</html>

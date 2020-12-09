@@ -62,7 +62,7 @@ class PostgresDb:
         '''
         try:
             self.cursor.execute(query)
-            result = self.cursor.fetchone()
+            result = self.cursor
             self.connection.commit()
         except Exception as error:
             print('error execting query "{}", error: {}'.format(query, error))
@@ -76,5 +76,5 @@ class PostgresDb:
 
 if __name__ == "__main__":
     db = PostgresDb()
-    print('Час у вас за вікном:')
-    print(db.execute('''SELECT now()''')[0])
+    # print('Час у вас за вікном:')
+    # print(db.execute('''SELECT now()''')[0])

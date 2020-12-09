@@ -1,6 +1,7 @@
 from sqlalchemy import Table, MetaData, Column, VARCHAR, Float, DateTime, Integer, ForeignKey
 from dao.PostgresDB import *
 # from PostgresDB import *
+from sqlalchemy import desc
 
 
 class ClientAccLog:
@@ -15,6 +16,12 @@ class ClientAccLog:
                            Column('accountid', VARCHAR(80), primary_key=True),
                            Column('accountstatus', VARCHAR(40), nullable=False),
                            autoload=True, extend_existing=True)
+
+    def get_by_id(self, id):
+        select_stmt = select([self.table]).\
+                      where(self.table.c.accountid == id)
+        result = self.session.execute(select_stmt)
+        return result
 
     def insert(self, id, status):
 
@@ -146,7 +153,8 @@ class Client:
         result = self.session.execute(select_stmt)
         return result
 
-    def insert(self, acc_id, name, surname, city, region, pass_type, pass_id, ipn, phone):
+    def insert(self, acc_id, name, surname,
+               city, region, pass_type, pass_id, ipn, phone):
 
         query = self.table.insert().\
             values({'accountid': acc_id,
@@ -169,7 +177,9 @@ class Client:
         self.session.execute(query)
         self.session.commit()
 
-    def update(self, acc_id, name, surname, city, region, pass_type, pass_id, ipn, phone):
+    def update(self, acc_id, name, surname, city,
+               region, pass_type, pass_id, ipn, phone):
+
         query = self.table.update().\
             where(self.table.c.accountid == acc_id).\
             values({'firstname': name,
@@ -315,7 +325,8 @@ class Card:
 
     def get_by_accid(self, accid):
         select_stmt = select([self.table]).\
-                      where(self.table.c.accountid == accid)
+                      where(self.table.c.accountid == accid).\
+                      order_by(desc(self.table.c.cardid))
         result = self.session.execute(select_stmt)
         return result
 
@@ -325,7 +336,49 @@ class Card:
         result = self.session.execute(select_stmt)
         return result
 
-    def insert(self, id, pin, cvv, type, tariff, status, rdate, vdate, money, limit, bonuses, acc_id):
+    def get_money_by_cardid(self, cardid):
+        select_stmt = select([self.table.c.moneyamount]).\
+                      where(self.table.c.cardid == cardid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def get_limit_by_cardid(self, cardid):
+        select_stmt = select([self.table.c.creditlimit]).\
+                      where(self.table.c.cardid == cardid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def get_status_by_cardid(self, cardid):
+        select_stmt = select([self.table.c.status]).\
+                      where(self.table.c.cardid == cardid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def get_name_surname_by_cardid(self, cardid, clientacclog, client):
+        select_stmt = self.session.query(self.table,
+                                         client.table.c.firstname,
+                                         client.table.c.lastname).\
+                      join(clientacclog.table,
+                           self.table.c.accountid == clientacclog.table.c.accountid).\
+                      join(client.table,
+                           clientacclog.table.c.accountid == client.table.c.accountid).\
+                      filter(self.table.c.cardid == cardid)
+        result = self.session.execute(select_stmt)
+        return result
+
+    def get_bonuscoef_by_id(self, cardid, cardinfo):
+
+        select_stmt = self.session.query(self.table, cardinfo.table.c.bonuscoef).\
+                      join(cardinfo.table,
+                           self.table.c.tariff == cardinfo.table.c.tariff).\
+                      filter(self.table.c.cardid == cardid)
+        result = self.session.execute(select_stmt)
+
+        return result
+
+    def insert(self, id, pin, cvv, type,
+               tariff, status, rdate, vdate,
+               money, limit, bonuses, acc_id):
 
         query = self.table.insert().\
             values({'cardid': id,
@@ -351,7 +404,19 @@ class Card:
         self.session.execute(query)
         self.session.commit()
 
-    def update(self, id, pin, cvv, type, tariff, status, rdate, vdate, money, limit, bonuses, acc_id):
+    def update_card_status(self, id, status):
+
+        query = self.table.update().\
+            where(self.table.c.cardid == id).\
+            values({'status': status})
+
+        self.session.execute(query)
+        self.session.commit()
+
+    def update(self, id, pin, cvv, type,
+               tariff, status, rdate, vdate,
+               money, limit, bonuses, acc_id):
+
         query = self.table.update().\
             where(self.table.c.cardid == id).\
             values({'pin': pin,
@@ -385,6 +450,12 @@ class TransInfo:
                            Column('transactiontype', VARCHAR(40), primary_key=True),
                            Column('comissioncoef', Float, nullable=False),
                            autoload=True, extend_existing=True)
+
+    def get_by_trans_type(self, trans_type):
+        select_stmt = select([self.table.c.comissioncoef]).\
+                      where(self.table.c.transactiontype == trans_type)
+        result = self.session.execute(select_stmt)
+        return result
 
     def insert(self, type, comission_coef):
 
@@ -428,14 +499,16 @@ class Transaction:
                            Column('cardidreciever', VARCHAR(40), nullable=False),
                            Column('initialsum', Float, nullable=False),
                            Column('comissionsum', Float, nullable=False),
-                           Column('bonusesused', Float, nullable=False),
                            Column('totalsum', Float, nullable=False),
                            Column('bonusesreсieved', Float, nullable=False),
                            Column('transdatetime', DateTime, nullable=False),
+                           Column('transactiondescription', VARCHAR(120)),
                            Column('transactiontype', VARCHAR(80), ForeignKey('transinfo.transactiontype')),
                            autoload=True, extend_existing=True)
 
-    def insert(self, cardid, rcardid, inisum, comsum, totsum, bonusused, bonusesrec, transtime, transtype):
+    def insert(self, cardid, rcardid, inisum,
+               comsum, totsum, bonusesrec,
+               transtime, transdesc, transtype):
 
         query = self.table.insert().\
             values({'cardid': cardid,
@@ -443,7 +516,7 @@ class Transaction:
                     'initialsum': inisum,
                     'comissionsum': comsum,
                     'totalsum': totsum,
-                    'bonusesused': bonusused,
+                    'transactiondescription': transdesc,
                     'bonusesreсieved': bonusesrec,
                     'transdatetime': transtime,
                     'transactiontype': transtype})
@@ -493,7 +566,7 @@ class TMPClientInf:
                     'email': email,
                     'passtype': pass_type,
                     'se_pass': se_pass,
-                    'pass_id': pass_id, 
+                    'pass_id': pass_id,
                     'ipn': ipn,
                     'region': region,
                     'city': city,

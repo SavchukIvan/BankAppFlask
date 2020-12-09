@@ -1,13 +1,16 @@
-from flask import Flask, session, g, render_template, request, redirect, url_for, make_response, jsonify, flash
+from flask import Flask, session, g, render_template, request, redirect, url_for, make_response, jsonify, flash, json
 from flask_mail import Mail, Message
 from sqlalchemy import MetaData
 from dao.PostgresDB import *
 from dao.table_methods import *
+import datetime
 from datetime import timedelta
+from datetime import datetime
 from helpers.datagen import *
 from helpers.tmpcl import *
 from helpers.user import *
 from helpers.card import *
+from helpers.plots import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ewhvfgegyVYAQGYVBehg82t7y3882yeuhhddh2yu87u9y8U9YYTu9Y8U9fbeuhf87d7v88dcJBJNd8fy78d8d7v8d8v8dyv8XGTCDESD7dfv9cyduv8yvuyJBGVLLNUdfy8ydvy8dy7v8dyfer83u83u8y83u8fyu8yuuvghufgynbhbvdhxbjhwgeujb3bBFXY75FTR3Q3EYVbjbhb3j2bhbj2bh32bj3bhb3j2bv3bkbv21nkb3hnkrb3bj3bvy3vh4bhhfcg3bgcJNBJ4b2cdeug8YY8UhUVAGu233vhqv'
@@ -26,6 +29,8 @@ client = Client(session=sessio, meta=metadata)
 ucard = Card(session=sessio, meta=metadata)
 cardinfo = CardInfo(session=sessio, meta=metadata)
 cardtype = CardTypeInfo(session=sessio, meta=metadata)
+transinfo = TransInfo(session=sessio, meta=metadata)
+transact = Transaction(session=sessio, meta=metadata)
 tmp_crd = TMPCard(session=sessio, meta=metadata)
 tmp_cli = TMPClientInf(session=sessio, meta=metadata)
 
@@ -51,6 +56,7 @@ def before_request():
         нам потрібно переконатися, що юзер знаходиться в системі
     '''
     g.user = None
+    g.admin = None
 
     if 'user_id' in session:
         # це здається має зробити час сессії 5 хв
@@ -61,8 +67,32 @@ def before_request():
         # можемо використовувати в програмі
         result = user_logins.get_by_id(id=session['user_id'])
         user = result.first()
-        user = User(id=user[0], email=user[1], password=user[2], logid=user[-1])
+        res = client_acc_log.get_by_id(id=user[-1])
+        acc_status = res.first()
+        user = User(id=user[0],
+                    email=user[1],
+                    password=user[2],
+                    logid=user[-1],
+                    status=acc_status[1])
         g.user = user
+
+    if 'admin' in session:
+        # це здається має зробити час сессії 5 хв
+        session.permanent = True
+        app.permanent_session_lifetime = timedelta(minutes=5)
+
+        # надаємо глобальній змінній юзера параметри які ми надалі
+        # можемо використовувати в програмі
+        result = user_logins.get_by_id(id=session['admin'])
+        user = result.first()
+        res = client_acc_log.get_by_id(id=user[-1])
+        acc_status = res.first()
+        user = User(id=user[0],
+                    email=user[1],
+                    password=user[2],
+                    logid=user[-1],
+                    status=acc_status[1])
+        g.admin = admin
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -82,15 +112,339 @@ def login():
             flash('Ви ввели некоректні дані')
             return redirect(url_for('login'))
 
+        res = client_acc_log.get_by_id(id=user[-1])
+        acc_status = res.first()[1]
+
         # якщо юзер є то перевіряємо пароль
-        if password == user[2]:
+        if acc_status == 'active' and password == user[2]:
             # створюємо сесію по id користувача
             session['user_id'] = user[0]
             # переводимо людину в профіль
             return redirect(url_for('profile', action='cards'))
 
+        elif acc_status == 'admin' and password == user[2]:
+            # створюємо сесію по id користувача
+            session['admin'] = user[0]
+            # переводимо людину в профіль
+            return redirect(url_for('admin'))
+
+        elif acc_status == 'blocked' and password == user[2]:
+            flash('Ваш профіль був заблокований адміністрацією')
+            return redirect(url_for('login'))
+
         flash('Ви ввели некоректні дані')
         return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    '''
+        Якщо юзер бажає покинути профіль,
+        то просто виймаємо його id з сесії
+    '''
+    session.pop('user_id', None)
+
+    return redirect(url_for('login'))
+
+
+@app.route('/logout_admin')
+def logout_admin():
+    '''
+        Якщо юзер бажає покинути профіль,
+        то просто виймаємо його id з сесії
+    '''
+    session.pop('admin', None)
+
+    return redirect(url_for('login'))
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+
+    if g.admin:
+
+        cdif = cardinfo.get_all()
+        tariffs = []
+        bonuscoefs = []
+        for row in cdif:
+            tariffs.append(row[0])
+            bonuscoefs.append(row[1])
+
+        num1 = [i+1 for i in range(len(tariffs))]
+
+        cdt = cardtype.get_all()
+        types = []
+        limits = []
+        for row in cdt:
+            types.append(row[0])
+            limits.append(row[1])
+
+        num2 = [i+1 for i in range(len(types))]
+
+        cursor = db.execute('''
+                            SELECT CardType, COUNT(CardType) Number_of_cards
+                            FROM Card
+                            GROUP BY CardType;
+                            '''
+                            )
+        labels = []
+        values = []
+        for row in cursor:
+            labels.append(row[0])
+            values.append(row[1])
+
+        pie_type = pie_plot(labels=labels,
+                            values=values,
+                            title='Відношення типів карток в системі')
+
+        cursor = db.execute('''
+                            SELECT Tariff, COUNT(Tariff) Number_of_cards
+                            FROM Card
+                            GROUP BY Tariff;
+                            '''
+                            )
+        labels = []
+        values = []
+        for row in cursor:
+            labels.append(row[0])
+            values.append(row[1])
+
+        pie_tariff = pie_plot(labels=labels,
+                              values=values,
+                              title='Відношення тарифів карток в системі')
+
+        activityBar = plot_activity(db=db)
+        return render_template('admin.html',
+                               cardinfo=zip(num1, tariffs, bonuscoefs),
+                               cardtype=zip(num2, types, limits),
+                               pie_type=pie_type,
+                               pie_tariff=pie_tariff,
+                               activityBar=activityBar)
+
+    return render_template('login.html')
+
+
+@app.route('/user_ban_unban', methods=['GET', 'POST'])
+def user_ban_unban():
+
+    if g.admin:
+
+        return render_template('user_ban_unban.html')
+
+    return render_template('login.html')
+
+
+@app.route('/update_user_status', methods=['GET', 'POST'])
+def update_user_status():
+
+    if g.admin:
+        if request.method == 'POST':
+            data = request.form
+
+            result = user_logins.get_by_email(email=data['email'])
+            user = result.first()
+
+            if user is None:
+                flash('Користувача з таким емейлом не існує', 'danger')
+                return redirect(url_for('user_ban_unban'))
+
+            client_acc_log.update(
+                id=user[-1],
+                status=data["status"]
+            )
+
+            flash(f'Cтатус користувача з логіном {data["email"]} змінено на {data["status"]}', 'success')
+            return render_template('user_ban_unban.html')
+
+    return render_template('login.html')
+
+
+@app.route('/card_ban_unban', methods=['GET', 'POST'])
+def card_ban_unban():
+
+    if g.admin:
+
+        return render_template('card_ban_unban.html')
+
+    return render_template('login.html')
+
+
+@app.route('/update_card_status', methods=['GET', 'POST'])
+def update_card_status():
+
+    if g.admin:
+        if request.method == 'POST':
+            data = request.form
+
+            result = ucard.get_by_cardid(data["card"].replace(" ", ""))
+            cardd = result.first()
+
+            if cardd is None:
+                flash('Картки з таким номером не існує', 'danger')
+                return redirect(url_for('user_ban_unban'))
+
+            ucard.update_card_status(
+                id=data["card"].replace(" ", ""),
+                status=data["status"]
+            )
+
+            flash(f'Статус картки з номером {data["card"].replace(" ", "")} змінено на {data["status"]}', 'success')
+            return render_template('card_ban_unban.html')
+
+    return render_template('login.html')
+
+
+@app.route('/update_tariff', methods=['GET', 'POST'])
+def update_tariff():
+
+    if g.admin:
+        data = request.form
+
+        cardinfo.update(
+            tariff=data["tariff"],
+            bonus_coef=float(data["bonus"].replace(',', '.'))
+        )
+
+        return redirect(url_for('admin'))
+
+    return render_template('login.html')
+
+
+@app.route('/update_type', methods=['GET', 'POST'])
+def update_type():
+
+    if g.admin:
+        data = request.form
+
+        cardtype.update(
+            cardtype=data["type"],
+            credit_limit=float(data["limit"].replace(',', '.'))
+        )
+
+        return redirect(url_for('admin'))
+
+    return render_template('login.html')
+
+
+@app.route('/transaction', methods=['GET', 'POST'])
+def transaction():
+
+    if g.user:
+
+        result = ucard.get_by_accid(accid=g.user.logid)
+        result = list(result)
+        numbers = [str(result[i][0]) for i in range(len(result))]
+        moneys = [str(result[i][8]) for i in range(len(result))]
+        type = [result[i][3] for i in range(len(result))]
+
+        return render_template('transaction.html',
+                               card_money=zip(numbers, moneys, type))
+
+    return render_template('login.html')
+
+
+@app.route('/transact_submit', methods=['GET', 'POST'])
+def transact_submit():
+
+    if g.user:
+        if request.method == 'POST':
+
+            result = transinfo.get_by_trans_type(trans_type='transfer')
+            com_coef = result.first()[0]
+
+            data = request.form
+            sender_card = data["senderCard"][:16]
+            receiver_card = data["receiverCard"].replace(" ", "")
+            sum = float(data["sum"])
+            commission = com_coef*sum
+            total_sum = sum + commission
+
+            result = ucard.get_bonuscoef_by_id(sender_card, cardinfo)
+            bon_coef = result.first()[-1]
+
+            bonuses_received = sum*bon_coef
+
+            result = ucard.get_by_cardid(cardid=receiver_card)
+            receiver_exist = result.first()
+
+            if receiver_exist is None:
+                return make_response(jsonify({'Card': 'Receiver card is not exist'}), 500)
+
+            result = ucard.get_name_surname_by_cardid(receiver_card,
+                                                      client_acc_log,
+                                                      client)
+            row = result.first()[-2:]
+            receiver_name = row[0] + " " + row[1]
+
+            result = ucard.get_money_by_cardid(cardid=sender_card)
+            money_in_card = result.first()[0]
+
+            result = ucard.get_limit_by_cardid(cardid=sender_card)
+            limit_in_card = result.first()[0]
+
+            if (money_in_card - total_sum) < -limit_in_card:
+                return make_response(jsonify({'Money': 'Limit is overdrafted'}), 500)
+
+            resp = {"sender_card": sender_card,
+                    "receiver_card": receiver_card,
+                    "sum": sum,
+                    "purpose": data["purpose"],
+                    "commission": commission,
+                    "total_sum": total_sum,
+                    "bonuses_received": bonuses_received,
+                    "receiver_name": receiver_name}
+
+            session["messages"] = json.dumps(resp)
+            return make_response(jsonify({'Message': 'It`s okay there!'}), 200)
+        else:
+            redirect(url_for('profile', action='cards'), code=301)
+
+    return render_template('login.html')
+
+
+@app.route('/transact_approve', methods=['GET', 'POST'])
+def transact_approve():
+
+    if g.user:
+        data = session["messages"]
+        session.pop("messages", None)
+
+        return render_template('transact_submit.html', data=json.loads(data))
+
+    return render_template('login.html')
+
+
+@app.route('/transact_execute', methods=['GET', 'POST'])
+def transact_execute():
+
+    if g.user:
+        if request.method == 'POST':
+            data = request.form
+
+            result = ucard.get_status_by_cardid(cardid=data["senderCard"])
+            status = result.first()[-1]
+
+            if status == 'blocked':
+                flash('Картка з якої здійснювалась транзакція наразі заблокована')
+                return redirect(url_for('profile', action='cards'))
+
+            transact.insert(
+                cardid=data["senderCard"],
+                rcardid=data["receiverCard"],
+                inisum=data["sum"],
+                comsum=data["commission"],
+                totsum=data["totalSum"],
+                bonusesrec=data["bonuses"],
+                transtime=datetime.datetime.now(),
+                transdesc=data["purpose"],
+                transtype="transfer"
+            )
+
+            return render_template('transact_success.html')
+        else:
+            return redirect(url_for('profile', action='cards'), code=301)
 
     return render_template('login.html')
 
@@ -118,10 +472,28 @@ def profile(action):
                 return render_template('user_page.html', exist=False,
                                        render=False, showbut=show)
             else:
+                values = []
+                labels = []
+                title = 'Баланс на ваших картках'
+                k = 1
+                for i in result:
+                    values.append(i[8])
+                    labels.append(f'card{k}')
+                    k += 1
+
+                balance_on_cards = barchart_cards(labels=labels,
+                                                  values=values,
+                                                  title=title)
+
+                trendBoard = plot_season_stl(db, g.user.logid)
                 # сторінка на якій є картки
-                return render_template('user_page.html', exist=True,
-                                       render=False, showbut=show,
-                                       cardsnum=cardsnum)
+                return render_template('user_page.html',
+                                       exist=True,
+                                       render=False,
+                                       showbut=show,
+                                       cardsnum=cardsnum,
+                                       balance_on_cards=balance_on_cards,
+                                       trendBoard=trendBoard)
 
         # перевіряємо роут користувача
         actions = ['card1', 'card2', 'card3', 'card4']
@@ -136,11 +508,19 @@ def profile(action):
                 pin = crd[1]
                 cvv = crd[2]
                 tariff = crd[4]
-                date = str(crd[7].date())[-5:]
+                status = crd[5]
+                date = str(crd[7].date())[2:7]
                 money = crd[8]
                 bonuses = crd[10]
                 limit = crd[9]
 
+                bonusesShow = False
+                if bonuses >= 100:
+                    bonusesShow = True
+
+                linearModel = plot_linear_regression(db=db,
+                                                     accountid=g.user.logid,
+                                                     cardid=crd[0])
                 # передаємо всі дані на сторінку, та рендеримо картку
                 return render_template('user_page.html',
                                        exist=True,
@@ -149,25 +529,54 @@ def profile(action):
                                        cardsnum=cardsnum,
                                        idx=int(action[-1]),
                                        money=money,
+                                       status=status,
                                        bonuses=bonuses,
                                        limit=limit,
                                        num=num,
                                        tariff=tariff,
                                        date=date,
-                                       cvv=cvv)
+                                       cvv=cvv,
+                                       linearModel=linearModel,
+                                       bonusesShow=bonusesShow)
 
-    return render_template("404.html")
+    return render_template('login.html')
 
 
-@app.route('/logout')
-def logout():
-    '''
-        Якщо юзер бажає покинути профіль,
-        то просто виймаємо його id з сесії
-    '''
-    session.pop('user_id', None)
+@app.route('/getbonuses/<cardnum>', methods=['GET', 'POST'])
+def getbonuses(cardnum):
+    if g.user:
+        result = ucard.get_by_accid(accid=g.user.logid)
+        result = list(result)
+        crd = result[int(cardnum[-1]) - 1]
+        money = crd[8]
+        bonuses = crd[10]
+        num = crd[0]
 
-    return redirect(url_for('login'))
+        status = crd[5]
+
+        if status == 'blocked':
+            flash(f'Картку {num} наразі заблоковано, зверніться до адміністрації')
+            return redirect(url_for('profile', action='cards'))
+
+        db.execute(
+        f'''
+        UPDATE Card
+        SET MONEYAMOUNT = {money + bonuses*2}
+        WHERE CARDID = '{num}'
+        '''
+        )
+        db.execute(
+        f'''
+        UPDATE Card
+        SET BONUSES = 0
+        WHERE CARDID = '{num}'
+        '''
+        )
+
+        flash(f'Бонуси успішно зняті на картку {num}')
+        return redirect(url_for('profile', action='cards'))
+
+    return render_template('404.html')
 
 
 @app.route('/card', methods=['GET', 'POST'])
@@ -181,13 +590,15 @@ def card():
 
         # якщо картки 4, то ця сторінка йому не доступна
         if ncards == 4:
-            return render_template("404.html")
+            return redirect(url_for('profile', action='cards'))
+
+        tmp_crd.delete(accid=g.user.logid)
 
         # звертаємося до функції в helpers, та генеруємо всі дані картки
         card_inf = generator.create_card()
-        # result = ucard.get_by_cardid(cardid=card_inf['number'])
-        # if result is not None:
-        #     card_inf = generator.create_card()
+        result1 = ucard.get_by_cardid(cardid=card_inf['number'])
+        if result1 is not None:
+            card_inf = generator.create_card()
 
         # тимчасово зберіємо їх в спеціальному класі
         icard = Cards(num=card_inf['number'],
@@ -235,11 +646,11 @@ def card():
         return render_template('card_creation.html',
                                card=icard,
                                num=num,
-                               date=str(card_inf['start'].date())[-5:],
+                               date=str(card_inf['end'].date())[2:7],
                                tariffs=tariffs,
                                types=types)
 
-    return render_template("404.html")
+    return render_template('login.html')
 
 
 @app.route('/card-create', methods=['GET', 'POST'])
@@ -281,9 +692,9 @@ def card_creation():
             return redirect(url_for('profile', action='cards'), code=301)
 
         else:
-            return render_template("404.html")
+            return redirect(url_for('profile', action='cards'), code=301)
 
-    return render_template("404.html")
+    return render_template('login.html')
 
 
 @app.route('/bank/<action>', methods=['GET', 'POST'])
@@ -328,7 +739,7 @@ def registration_in():
         елекронну пошту з згенерованими даними
     '''
     if g.user:
-        render_template("404.html")
+        render_template('login.html')
 
     if request.method == 'POST':
         # отримуємо дані з форми
@@ -350,7 +761,7 @@ def registration_in():
         if ps is not None:
             return make_response(jsonify({'PassportID': 'Is not valid'}), 500)
 
-        result = client.get_by_phone(phone=reg["phone_numb"])
+        result = client.get_by_phone(phone=('+380' + reg["phone_numb"]))
         ph = result.first()
         if ph is not None:
             return make_response(jsonify({'Phone': 'Is not valid'}), 500)
@@ -374,7 +785,7 @@ def registration_in():
             ipn=reg["IPN"],
             region=reg["region"],
             city=reg["city"],
-            phone=reg["phone_numb"],
+            phone=('+380'+reg["phone_numb"]),
             password=reg["password"],
             question=reg["secret"],
             answer=reg["answer"],
@@ -391,7 +802,7 @@ def registration_in():
 def secret_key():
 
     if g.user:
-        render_template("404.html")
+        render_template('login.html')
 
     if request.method == 'POST':
         # беремо дані з реквесту
@@ -451,4 +862,4 @@ def secret_key():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

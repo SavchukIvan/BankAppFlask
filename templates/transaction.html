@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/styles.css') }}">
+    <title>Transaction page</title>
+</head>
+<body>
+
+    <!-- навігаційна панель -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+
+        <a class="navbar-brand" href="{{ url_for('main_index') }}">BankApp</a>
+        <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav justify-content-end ml-auto">
+            <a class="nav-link" href="{{ url_for('profile', action='cards') }}">My Profile</a>
+            <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
+          </div>
+        </div>
+
+    </nav>
+
+    <div id='alertspace'>
+        
+    </div>
+
+    <div id="outside_block">
+        <div id="transact" class="col-md-5 mb-3">
+                <div class="d-flex justify-content-center" id="biglogo">
+                    Транзакція з карти на карту
+                </div>
+
+                <form action="/transact_submit" method="POST" id="transaction-form" class="needs-validation" novalidate>
+
+                    <div class="form-row">
+                        <!-- Розставити імена кожному інпуту!!!! -->
+                        <div class="col-md-12 mb-3">
+                            <label>З картки</label>
+                            <select name="senderCard" id="senderCard" class="custom-select" required>
+                                <option selected disabled value="">Оберіть картку...</option>
+                                {% for card, money, type in card_money %}
+                                    <option>{{ card + "  "}} Баланс: {{ money }} ₴  {{"  " + type}} </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Error message</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-md-12 mb-3">
+                            <label>На картку</label>
+                            <input name="receiverCard" id="receiverCard" type="tel" class="form-control" maxlength="19" placeholder="**** **** **** ****" autocomplete="off" required>
+                            <div class="invalid-feedback">Error message</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-md-12 mb-3">
+                            <label>Сума</label>
+                            <input name="sum" id="summa" type="tel" class="form-control" placeholder="100.00" maxlength="10" autocomplete="off" required>
+                            <div class="invalid-feedback">Error message</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-md-12 mb-3">
+                            <label>Опис транзакції</label>
+                            <input name="purpose" id="purpose" type="text" class="form-control" autocomplete="off" value="">
+                        </div>
+                    </div>
+
+                    <!-- кнопка підтвердження -->
+                    <div class="d-flex justify-content-center">
+                        <button class="btn btn-custom col-md-5" id="ButSub" type="submit">Далі</button>
+                    </div>
+                </form>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/transactionValidation.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/transactionEvents.js') }}"></script>
+    <script>
+        const myForm = document.getElementById("transaction-form");
+
+        myForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var butn = document.getElementById("ButSub");
+            butn.disabled = disabled = true;
+            butn.innerHTML = "Processing...";
+            const formData = new FormData(this);
+
+            fetch('/transact_submit', {
+                method: 'POST',
+                body: formData
+            }).then(function (response) {
+
+                if (response.status !== 200) {
+                    response.json().then(function (data) {
+                        document.getElementById('alertspace').innerHTML = ''; 
+                        for (const [ key, value ] of Object.entries(data)) {
+                            document.getElementById('alertspace').innerHTML += "<div class='alert alert-danger alert-dismissible fade show' role='alert'>" +
+                            "<strong>"+ key +" " + value +"</strong> Перевірте будь-ласка введені дані." +
+                            "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>" +
+                            "<span aria-hidden='true'>&times;</span></button> </div>";
+                        }
+                        var butn = document.getElementById("ButSub");
+                        butn.disabled = disabled = false;
+                        butn.innerHTML = "Далі";
+                        console.log(data);
+                    });
+                } else {
+                    console.log("Success");
+                    // response.json().then(function (data) {
+                        
+                    window.location.href = window.location.origin + '/transact_approve';
+
+                    // fetch(window.location.origin + '/transact_approve', {
+                    //     method: 'POST',
+                    //     headers: {
+                    //     'Content-Type': 'application/json; charset=utf-8'
+                    //     },
+                    //     body: JSON.stringify(data),
+                    //     dataType: 'json'
+                    // })
+
+                    // });
+                }
+                        
+            })
+        });
+    </script>
+</body>
+</html>

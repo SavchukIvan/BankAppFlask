@@ -43,7 +43,7 @@ const passpSeriesRegex = /^[абвгґдеєжзиіїйклмнопрстуфх
 const passpBookIDRegex = /^\d{6}$/;
 const passpCardIDRegex = /^\d{9}$/;
 const vatinRegex = /^\d{10}$|^\d{12}?$/;
-const phoneRegex = /^\+?3?8?(0[5-9][0-9]\d{7})$/;
+const phoneRegex = /^\d{9}$/;
 const passwordGeneralRegexp = /^\w{8,40}$/i;
 const passwordNumRegex = /.{0,}\d+.{0,}/;
 const passwordUpperRegex = /.{0,}[A-Z]+.{0,}/;
@@ -341,15 +341,14 @@ It uses each previous validators (listeners) within AND function.
 AND function is just logical AND operator-like function
 */
 function checkForm(event){
-	event.preventDefault();
-	if (AND(checkName(event), checkSurname(event), checkEmail(event), 
+	return AND(checkName(event), checkSurname(event), checkEmail(event), 
 		checkPassportType(event), checkPassportSeries(event), checkPassportID(event),
 		checkVATIN(event), 
 		checkRegion(event), checkDistrict(event), checkCity(event),
 		checkPhone(event),
 		checkPassword(event), checkPassword2(event),
 		checkSecretQuestion(event), checkSecretAnswer(event),
-		checkAcceptRules()));
+		checkAcceptRules());
 }
 
 /*
@@ -383,14 +382,14 @@ name.addEventListener("blur", checkName, true);
 surname.addEventListener("blur", checkSurname, true);
 email.addEventListener("blur", checkEmail, true);
 
-passportType.addEventListener("blur", checkPassportType, true);
+passportType.addEventListener("change", checkPassportType, true);
 passportSeries.addEventListener("blur", checkPassportSeries, true);
 passportID.addEventListener("blur", checkPassportID, true);
 vatin.addEventListener("blur", checkVATIN, true);
 
-region.addEventListener("blur", checkRegion, true);
-district.addEventListener("blur", checkDistrict, true);
-city.addEventListener("blur", checkCity, true);
+region.addEventListener("change", checkRegion, true);
+district.addEventListener("change", checkDistrict, true);
+city.addEventListener("change", checkCity, true);
 phone.addEventListener("blur", checkPhone, true);
 
 password.addEventListener("blur", checkPassword, true)
@@ -398,10 +397,3 @@ password2.addEventListener("blur", checkPassword2, true)
 
 secretQuestion.addEventListener("blur", checkSecretQuestion, true)
 secretAnswer.addEventListener("blur", checkSecretAnswer, true)
-
-
-/*
-Key listener - validation of entire form on submit event before sending form to
-server.
-*/
-form.addEventListener("submit", checkForm, false);

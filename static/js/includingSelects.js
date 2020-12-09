@@ -117,9 +117,9 @@ function createOptions(options, defaultOptionText="Обрати..."){
 /*
 Binding listeners to events on select elements.
 */
-passportType.addEventListener('blur', onSelectPassportType);
-region.addEventListener('blur', onSelectRegion);
-district.addEventListener('blur', onSelectDistrict);
+passportType.addEventListener('change', onSelectPassportType);
+region.addEventListener('change', onSelectRegion);
+district.addEventListener('change', onSelectDistrict);
 
 
 /*

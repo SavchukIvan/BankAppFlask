@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In Page</title>
+    <title>Card ban unban</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/styles.css') }}">
 
@@ -13,54 +13,72 @@
     <!-- навігаційна панель -->
     <nav class="navbar navbar-expand-lg navbar-custom">
 
-        <a class="navbar-brand" href="{{ url_for('main_index') }}">BankApp</a>
         <button class="navbar-toggler ml-auto custom-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav justify-content-end ml-auto">
-            <a class="nav-link" href="{{ url_for('login') }}">Enter Profile</a>
+            <a class="nav-link" href="{{ url_for('admin') }}">Дашборд</a>
+            <a class="nav-link" href="{{ url_for('user_ban_unban') }}">Операції з клієнтами</a>
+            <a class="nav-link" href="#">Операції з картками</a>
+            <a class="nav-link" href="{{ url_for('logout_admin') }}">Log out</a>
           </div>
         </div>
 
     </nav>
 
-    {% for message in get_flashed_messages() %}
-        <div class="alert alert-danger">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            {{ message }}
-        </div>
-    {% endfor %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+        {% endif %}
+    {% endwith %}
     
     <div id="log_in" class="col-md-4 mb-3">
             <div class="d-flex justify-content-center" id="biglogo">
-                Вхід в систему
+                Змініть статус картки
             </div>
 
-            <form action="/login" method="POST" id="login-form" class="needs-validation" novalidate>
+            <form action="/update_card_status" method="POST" id="login-form" class="needs-validation" novalidate>
 
                 <!-- тут вводять емейл -->
                 <div class="form-row">
                     <div class="col-md-12 mb-3">
-                        <label>Електронна адреса</label>
-                        <input id="email" type="email" name="email" class="form-control" placeholder="Email" autocomplete="off" required>
-                        <div class="invalid-feedback">Error message</div>
+                        <label>Картка клієнта</label>
+                        <input id="card" name='card' type="text" class="form-control" placeholder="1234 1234 1234 1234" autocomplete="off" required>
+                        <div class="invalid-feedback">
+                            Ввведіть картку користувача
+                        </div>
                     </div>
                 </div>
 
                 <!-- тут вводять пароль -->
                 <div class="form-row">
                     <div class="col-md-12 mb-3">
-                        <label>Пароль</label>
-                        <input id="password" type="password" name="password" class="form-control" placeholder="Password" autocomplete="off" required>
-                        <div class="invalid-feedback">Error message</div>
+                        <label for="validationCustom01">Статус картки</label>
+                        <select name="status" class="custom-select" id="validationCustom01" required>
+                        <!-- це опції -->
+                        <option selected disabled value="">Оберіть статус...</option>
+                        <option>active</option>
+                        <option>blocked</option>
+
+                        </select>
+                        <div class="invalid-feedback">
+                            Оберіть статус картки
+                        </div>
                     </div>
                 </div>
 
                 <!-- кнопка підтвердження -->
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-custom col-md-5" type="submit">Увійти</button>
+                    <button class="btn btn-custom col-md-5" type="submit">Змінити</button>
                 </div>
             </form>
     </div>
@@ -68,6 +86,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/loginValidation.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/validation.js') }}"></script>
+
 </body>
 </html>

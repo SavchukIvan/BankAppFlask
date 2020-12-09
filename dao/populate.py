@@ -1,5 +1,5 @@
-# from table_methods import *
-# from sqlalchemy import MetaData
+from table_methods import *
+from sqlalchemy import MetaData
 # from PostgresDB import *
 
 # db = PostgresDb()
@@ -147,13 +147,221 @@ test operations for Card
 '''
     test operations for Transaction
 '''
-# tact = Transaction()
-# tact.insert(cardid='1234567812345678',
-#             rcardid='123456781232324',
-#             inisum=1000,
-#             comsum=0.01*1000,
-#             totsum=1000+0.01*1000,
-#             bonusused=0,
-#             bonusesrec=0.04431,
-#             transtime='28.10.2020 23:55:45',
-#             transtype='basic')
+# import pandas as pd
+# import numpy as np
+# import random
+# import datetime
+
+# db = PostgresDb()
+# # session = db.sqlalchemy_session
+# # metadata = MetaData(bind=db.sqlalchemy_engine)
+# cursor = db.execute(
+# '''
+# WITH USER_CARDS AS (
+# 	SELECT CARDID
+# 	FROM CARD
+# 	WHERE ACCOUNTID = 'UA44305299000004000007652499398'
+# )
+# SELECT
+# 	CASE 
+# 	   WHEN TNC.CARDID IN (SELECT * FROM USER_CARDS) THEN totalsum
+#        ELSE TNC.INITIALSUM END
+#        AS money_history,
+# 	CASE
+# 	   WHEN TNC.CARDID IN (SELECT * FROM USER_CARDS) THEN 'sender'
+#        ELSE 'getter' END
+#        AS user_status,
+#     CASE
+#        WHEN TNC.CARDID IN (SELECT * FROM USER_CARDS) THEN TNC.CARDID
+#        ELSE TNC.CARDIDRECIEVER END
+#        AS CARDID,
+# 	TNC.TRANSDATETIME
+# FROM TRANSACTION AS TNC
+# WHERE (TNC.CARDID IN (SELECT * FROM USER_CARDS))
+# OR (TNC.CARDIDRECIEVER IN (SELECT * FROM USER_CARDS))
+# ORDER BY TNC.TRANSDATETIME;
+# '''
+# )
+
+# ids = []
+# money = []
+# status = []
+# time = []
+
+# for row in cursor:
+#     ids.append(row[2])
+#     money.append(row[0])
+#     status.append(row[1])
+#     time.append(row[3].date())
+
+# df = pd.DataFrame({'id': ids,
+#                    'money': money,
+#                    'status': status,
+#                    'time': time})
+# print(df)
+# result = df.groupby(by=['id', 'status', 'time'])['money'].\
+#             aggregate('sum').\
+#             reset_index().\
+#             sort_values(by=['time'])
+
+# df_selected = result[result['time'] > datetime.datetime.now().date() - pd.to_timedelta("90day")].\
+#                         reset_index(drop=True).\
+#                         sort_values(by=['time'])
+
+# print((df_selected["time"][len(df_selected)-1] - df_selected["time"][0]).days)
+# if (df_selected["time"][len(df_selected)-1] - df_selected["time"][0]).days < 90:
+#     print(False)
+
+# cursor = db.execute(
+# '''
+# SELECT SUM(MONEYAMOUNT)
+# FROM CARD
+# WHERE ACCOUNTID = 'UA44305299000004000007652499398'
+# '''
+# )
+
+# money_now = [row[0] for row in cursor][0]
+
+# history = [money_now]
+
+
+# for i in range(len(df_selected)-1, -1, -1):
+#     status = df_selected.loc[i, 'status']
+#     if status == 'sender':
+#         val = history[0] + df_selected.loc[i, 'money']
+#         history.insert(0, val)
+#     elif status == 'getter':
+#         val = history[0] - df_selected.loc[i, 'money']
+#         history.insert(0, val)
+
+# import matplotlib.pyplot as plt
+# plt.plot([i for i in range(len(history))], history)
+# plt.show()
+# part_card = result[result['id'] == '4000009111787308'].\
+#                         reset_index(drop=True).\
+#                         sort_values(by=['time'])
+# # print(result)
+
+# df_selected = part_card[part_card['time'] > datetime.datetime.now().date() - pd.to_timedelta("90day")].\
+#                         reset_index(drop=True).\
+#                         sort_values(by=['time'])
+# print(df_selected)
+# dates_eu = pd.date_range(start='09-2-2020', end='12-1-2020', freq='D')
+# dates_eu = date_rng.strftime('%d/%m/%Y')  # європейський час
+# arr = np.array([0, 14216, 13743, 13334, 12929, 12713, 11950,
+#                 11979, 11292, 10776, 10103, 9748, 8981, 8250, 7881, 7349, 
+#                 6928, 6101, 5583, 4906, 4629, 4711, 4344, 3625, 2819, 2184,
+#                 1646, 1173, 1266, 734, 366, 14771, 14004, 13387, 13032, 13163,
+#                 12424, 11999, 11650, 11295, 10564, 9818, 9354, 8720, 8504, 7725,
+#                 7429, 6913, 6280, 6280, 5869, 5653, 4825, 4293, 3874, 3078, 2985,
+#                 2214, 1781, 1044, 325, 14679, 14163, 14207, 13470, 12664, 
+#                 11889, 11445, 11001, 10205, 10183, 9774, 9470, 9102, 8274, 7528,
+#                 7322, 7232, 6486, 5887, 5468, 4851, 4120, 3443, 3369, 3047,
+#                 2603, 2182, 1830, 1412, 1029])
+
+# current = 15000
+# history = [current]
+
+# for i in range(1, len(arr), 30):
+#     print(arr[i])
+    # history.insert(0, i - history[0])
+# print(len(dates_eu))
+# print(len(arr))
+
+# init_sum = 15000
+# rand_int0 = np.random.randint(200, 700, 90)
+
+# rand_int = []
+
+# for i in rand_int0:
+#     rand_int.append(int(i))
+
+# money_by_month = [0]
+# tact = Transaction(session, metadata)
+# sum_spend = 200
+# tact.insert(
+#     cardid='4000009111787308',
+#     rcardid='4000002635819574',
+#     inisum=sum_spend,
+#     comsum=0.01*sum_spend,
+#     totsum=sum_spend+0.01*sum_spend,
+#     bonusesrec=sum_spend*0.001,
+#     transtime='12-5-2020',
+#     transdesc='For sweets',
+#     transtype='transfer'
+# )
+
+# for i in range(len(rand_int)):
+#     if ((i+1) % 7) == 0:
+#         sum_spend = random.choice(rand_int)
+#         sum_get = random.choice(rand_int)
+
+#         tact.insert(
+#             cardid='4000009111787308',
+#             rcardid='4000002635819574',
+#             inisum=sum_spend,
+#             comsum=0.01*sum_spend,
+#             totsum=sum_spend+0.01*sum_spend,
+#             bonusesrec=sum_spend*0.001,
+#             transtime=dates_eu[i],
+#             transdesc='For sweets',
+#             transtype='transfer'
+#         )
+
+#         tact.insert(
+#             cardid='4000002635819574',
+#             rcardid='4000009111787308',
+#             inisum=sum_get,
+#             comsum=0.01*sum_get,
+#             totsum=sum_get+0.01*sum_get,
+#             bonusesrec=sum_get*0.001,
+#             transtime=dates_eu[i],
+#             transdesc='For me',
+#             transtype='transfer'
+#         )
+
+#     elif (i % 30) == 0:
+
+#         sum_spend = random.choice(rand_int)
+#         sum_get = 15000
+#         tact.insert(
+#             cardid='4000009111787308',
+#             rcardid='4000002635819574',
+#             inisum=sum_spend,
+#             comsum=0.01*sum_spend,
+#             totsum=sum_spend+0.01*sum_spend,
+#             bonusesrec=sum_spend*0.001,
+#             transtime=dates_eu[i],
+#             transdesc='For sweets',
+#             transtype='transfer'
+#         )
+
+#         tact.insert(
+#             cardid='4000002635819574',
+#             rcardid='4000009111787308',
+#             inisum=sum_get,
+#             comsum=0.01*sum_get,
+#             totsum=sum_get+0.01*sum_get,
+#             bonusesrec=sum_get*0.001,
+#             transtime=dates_eu[i],
+#             transdesc='For me',
+#             transtype='transfer'
+#         )
+#     else:
+#         sum_spend = random.choice(rand_int)
+#         tact.insert(
+#             cardid='4000009111787308',
+#             rcardid='4000002635819574',
+#             inisum=sum_spend,
+#             comsum=0.01*sum_spend,
+#             totsum=sum_spend+0.01*sum_spend,
+#             bonusesrec=sum_spend*0.001,
+#             transtime=dates_eu[i],
+#             transdesc='For sweets',
+#             transtype='transfer'
+#         )
+
+
+# print(history)
+# print(len(history))
+

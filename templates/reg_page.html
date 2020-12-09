@@ -27,6 +27,7 @@
 
 	
 	<!-- реєстраційна форма -->
+	<div id="outside_block">
 	<div id="form_reg">
 
 		<div id="biglogo" class="d-flex justify-content-end">
@@ -131,10 +132,15 @@
 
 				<!-- тут вказують номер телефону -->
 				<div class="col-md-3 mb-3 form-field">
-					<label for="phone">Номер телефону</label>
-					<input type="tel" id="phone" name="phone_numb" class="form-control" placeholder="+380xxxxxxxxx" autocomplete="off" required>
-					<div class="invalid-feedback">Error message</div>
-				</div>
+                    <label for="phone">Номер телефону</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3">+380</span>
+                        </div>
+                        <input type="tel" id="phone" name="phone_numb" class="form-control" placeholder="(xx) xxx-xxxx" maxlength="9" autocomplete="off" required aria-describedby="basic-addon3">
+                        <div class="invalid-feedback">Error message</div>
+                    </div>
+                </div>
 			</div>
 
 			<!-- Рядок форми для створення пароля -->
@@ -204,6 +210,7 @@
 		</form>
 
 	</div>
+	</div>
 
 	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
@@ -212,5 +219,6 @@
   	<script type="text/javascript" src="{{ url_for('static', filename='js/regionsDistrictsCities.js') }}"></script>
 	<script type="text/javascript" src="{{ url_for('static', filename='js/includingSelects.js') }}"></script>
 	<script type="text/javascript" src="{{ url_for('static', filename='js/regAJAX.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/validation.js') }}"></script>
 </body>
 </html>

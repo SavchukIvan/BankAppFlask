@@ -1,10 +1,16 @@
-const myForm = document.getElementById("registration-form");
+/*
+	Remember that we uses current script after script registrationFormValidation.js
+	And so we use form validation function checkForm from named script
+*/
+const myForm = form;
 
 myForm.addEventListener('submit', function (e) {
 	e.preventDefault();
 
+	if (!checkForm(e)) return;
+
 	var butn = document.getElementById("ButSub");
-	butn.disabled = disabled = true;
+	butn.disabled  = true;
 	butn.innerHTML = "Processing...";
 	const formData = new FormData(this);
 
@@ -23,7 +29,7 @@ myForm.addEventListener('submit', function (e) {
 					"<span aria-hidden='true'>&times;</span></button> </div>";
 				}
 				var butn = document.getElementById("ButSub");
-				butn.disabled = disabled = false;
+				butn.disabled = false;
 				butn.innerHTML = "Відправити дані";
 				console.log(data);
 			});
